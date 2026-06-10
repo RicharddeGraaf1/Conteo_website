@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="nl" data-cards="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conteo Consulting — Open datatools voor de Omgevingswet</title>
+<meta name="description" content="Portfolio van open, publiek toegankelijke civic-tech datatools rond de Nederlandse Omgevingswet en het Digitaal Stelsel Omgevingswet (DSO), door Richard de Graaf / Conteo Consulting." />
+
+<!-- Web fonts via CDN, met system-fallback -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     ============================================================ */
+  :root {
+    /* Palet */
+    --paper:        #FAFAF7;   /* warmwit, achtergrond */
+    --paper-2:      #F2F1EA;   /* iets dieper warmwit, secties */
+    --green-900:    #133A66;   /* diepblauw, primair accent */
+    --green-700:    #2563A8;   /* helderder blauw */
+    --green-100:    #E5EDF7;   /* blauw tint vlak */
+    --ochre:        #D4A017;   /* warme oker, spaarzaam */
+    --ochre-soft:   #F4E6BF;   /* oker tint vlak */
+
+    /* Neutralen */
+    --ink:          #1B1F1D;   /* hoofdtekst, warm zwart-groen */
+    --ink-2:        #4A524E;   /* secundaire tekst */
+    --ink-3:        #7C837F;   /* tertiair / labels */
+    --line:         #E4E2D8;   /* randen */
+    --line-2:       #D7D5C9;   /* sterkere rand */
+    --white:        #FFFFFF;
+
+    /* Status */
+    --live:         #1E7A4A;   /* groen — alleen voor 'Live' status */
+    --live-bg:      #E1F0E7;
+    --dev:          #59626D;   /* leigrijs */
+    --dev-bg:       #ECEEF1;
+    --soon:         #6B6F73;   /* grijs */
+    --soon-bg:      #ECEBE5;
+
+    /* Maatvoering */
+    --r-card: 8px;
+    --r-chip: 999px;
+    --maxw: 1300px;
+    --shadow-1: 0 1px 2px rgba(27,31,29,.05);
+    --shadow-2: 0 4px 14px rgba(15,74,55,.10);
+
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  /* ============================================================
+     RESET / BASE
+     ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, p { margin: 0; }
+  a { color: inherit; }
+  img, svg { display: block; max-width: 100%; }
+
+  .wrap {
+    width: 100%;
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: clamp(20px, 5vw, 48px);
+  }
+
+  /* Accessibiliteit: zichtbare focus */
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2.5px solid var(--ochre);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .skip {
+    position: absolute; left: -999px; top: 0;
+    background: var(--green-900); color: #fff;
+    padding: 10px 16px; border-radius: 0 0 8px 0; z-index: 100;
+    font-weight: 600; font-size: 15px;
+  }
+  .skip:focus { left: 0; }
+
+  /* ============================================================
+     SITE HEADER (slank, sticky)
+     ============================================================ */
+  .site-head {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: saturate(1.2) blur(8px);
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-head__row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; height: 64px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+  .brand__mark {
+    width: 30px; height: 30px; flex: none;
+  }
+  .brand__name {
+    font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .brand__name span { color: var(--ink-3); font-weight: 500; }
+  .site-head__cta {
+    font-family: var(--font-mono); font-size: 13px; color: var(--ink-2);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+  }
+  .site-head__cta:hover { color: var(--green-700); }
+  .site-head__cta .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
+  @media (max-width: 560px) { .site-head__cta { display: none; } }
+
+  /* ============================================================
+     HERO + polygoon/topografisch motief
+     ============================================================ */
+  .hero { position: relative; overflow: hidden; }
+  .hero__mesh {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .hero__fade {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 80% -10%, transparent 40%, var(--paper) 78%),
+      linear-gradient(to bottom, transparent 55%, var(--paper) 100%);
+  }
+  .hero__inner {
+    position: relative; z-index: 2;
+    padding-top: clamp(18px, 2.6vw, 34px);
+    padding-bottom: clamp(14px, 2vw, 24px);
+    max-width: 720px;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.02em;
+    color: var(--green-700);
+    background: var(--white);
+    border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 7px;
+    box-shadow: none;
+  }
+  .eyebrow .pin {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--ochre); transform: rotate(45deg);
+  }
+  .hero h1 {
+    margin-top: 13px;
+    font-size: clamp(26px, 4vw, 41px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    color: var(--green-900);
+    text-wrap: balance;
+  }
+  .hero h1 em { font-style: normal; color: var(--ochre); }
+  .hero__lead {
+    margin-top: 11px;
+    font-size: clamp(15px, 1.9vw, 17.5px);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 60ch;
+    text-wrap: pretty;
+  }
+  .hero__meta {
+    margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px 8px; align-items: center;
+  }
+  .metachip {
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-2);
+    background: var(--white); border: 1px solid var(--line);
+    padding: 5px 11px; border-radius: var(--r-chip);
+  }
+  .metachip strong { color: var(--green-900); font-weight: 600; }
+
+  /* ============================================================
+     SECTIE-KOP
+     ============================================================ */
+  .section { padding-block: clamp(40px, 6vw, 64px); }
+  #producten { padding-top: clamp(14px, 2vw, 24px); }
+  .section--alt { background: var(--paper-2); border-block: 1px solid var(--line); }
+  .sec-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 18px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .sec-head__title {
+    font-size: clamp(13px, 2vw, 14px); font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sec-head__title::before {
+    content: ""; width: 22px; height: 2px; background: var(--ochre); display: inline-block;
+  }
+  .sec-head__count { font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); }
+
+  /* ============================================================
+     PRODUCT-GRID
+     ============================================================ */
+  .grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  @media (max-width: 1080px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 760px)  { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 480px)  { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    position: relative;
+    display: flex; flex-direction: column;
+    border-radius: var(--r-card);
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform .24s cubic-bezier(.2,.7,.3,1), box-shadow .24s, border-color .24s;
+  }
+  /* Top-accentbalk die op hover “ingeschoven” wordt */
+  .card__accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 6;
+    background: var(--ochre);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .32s cubic-bezier(.2,.7,.3,1);
+  }
+
+  /* Visuele header — thematische kaart/grafiek-preview per tool */
+  .card__media {
+    position: relative; height: 156px; overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+  .card__media svg.media { width: 100%; height: 100%; display: block; }
+  .card__media .badge,
+  .card__index,
+  .card__icon { pointer-events: none; }
+  .card__index {
+    position: absolute; top: 12px; left: 13px; z-index: 4;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em;
+    color: var(--ink-2);
+    background: color-mix(in srgb, var(--white) 78%, transparent);
+    padding: 3px 7px; border-radius: 5px;
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  }
+  .card__media .badge {
+    position: absolute; top: 11px; right: 12px; z-index: 4;
+    box-shadow: 0 1px 3px rgba(27,31,29,.12);
+  }
+  .card__icon {
+    position: absolute; left: 18px; bottom: -22px; z-index: 5;
+    width: 44px; height: 44px; border-radius: 9px;
+    display: grid; place-items: center;
+    background: var(--white); border: 1px solid var(--line-2);
+    box-shadow: none;
+    transition: background .24s, color .24s, transform .24s, border-color .24s;
+  }
+  .card__icon svg { width: 23px; height: 23px; }
+
+  .card__body {
+    display: flex; flex-direction: column; flex: 1 1 auto;
+    padding: 32px 20px 18px;
+  }
+  .card h3 {
+    font-size: 19px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.18;
+    overflow-wrap: anywhere; hyphens: auto;
+  }
+  .card__pitch {
+    margin-top: 8px; font-size: 14.5px; line-height: 1.5; text-wrap: pretty;
+    overflow-wrap: break-word; hyphens: auto;
+    flex: 1 1 auto;
+  }
+  .card__foot {
+    margin-top: 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 14px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+  .tag {
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.01em;
+    padding: 4px 9px; border-radius: 4px; white-space: nowrap;
+  }
+  .card__arrow {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; pointer-events: none;
+    display: grid; place-items: center;
+    transition: transform .22s, background .22s;
+  }
+  .card__arrow svg { width: 15px; height: 15px; }
+
+  /* Status-badge */
+  .badge {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.02em;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 8px; border-radius: 6px;
+    white-space: nowrap;
+  }
+  .badge .led { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .badge--live { background: var(--live-bg); color: var(--live); }
+  .badge--live .led { background: var(--live); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 18%, transparent); }
+  .badge--dev  { background: var(--dev-bg); color: var(--dev); }
+  .badge--dev .led { background: var(--dev); }
+  .badge--soon { background: var(--soon-bg); color: var(--soon); }
+  .badge--soon .led { background: var(--soon); }
+
+  /* Stretched-link: hele kaart klikbaar (overlays staan op pointer-events:none) */
+  .card__link { text-decoration: none; color: inherit; }
+  .card__link::after {
+    content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit;
+  }
+
+  /* ============================================================
+     KAART-STIJL — Licht (wit, groene titel, oker accent)
+     ============================================================ */
+  [data-cards="light"] .card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-1);
+  }
+  [data-cards="light"] .card h3 { color: var(--green-900); }
+  [data-cards="light"] .card__pitch { color: var(--ink-2); }
+  [data-cards="light"] .card__icon { color: var(--green-900); }
+  [data-cards="light"] .tag { background: var(--paper-2); color: var(--ink-2); }
+  [data-cards="light"] .card__arrow { background: var(--green-100); color: var(--green-900); }
+  [data-cards="light"] .card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-2);
+    border-color: color-mix(in srgb, var(--green-700) 38%, var(--line));
+  }
+  [data-cards="light"] .card:hover .card__accent { transform: scaleX(1); }
+  [data-cards="light"] .card:hover .card__icon {
+    background: var(--green-900); color: #fff; border-color: var(--green-900);
+    transform: translateY(-2px);
+  }
+  [data-cards="light"] .card:hover .card__arrow {
+    background: var(--green-900); color: #fff; transform: translateX(2px);
+  }
+
+  /* ============================================================
+     OVER-SECTIE
+     ============================================================ */
+  .about {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(28px, 5vw, 56px);
+    align-items: start;
+  }
+  .about__lead {
+    font-size: clamp(19px, 2.4vw, 22px); line-height: 1.5; letter-spacing: -0.01em;
+    color: var(--ink); text-wrap: pretty;
+  }
+  .about__lead strong { color: var(--green-900); font-weight: 600; }
+  .about__body { margin-top: 18px; color: var(--ink-2); font-size: 16px; line-height: 1.65; max-width: 60ch; text-wrap: pretty; }
+  .about__aside {
+    background: var(--white); border: 1px solid var(--line); border-radius: var(--r-card);
+    padding: 24px; box-shadow: var(--shadow-1);
+  }
+  .about__aside h3 {
+    font-family: var(--font-mono); font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--ink-3); font-weight: 500; margin-bottom: 14px;
+  }
+  .contact-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+  .contact-list a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px; border-radius: 10px; text-decoration: none;
+    color: var(--ink); transition: background .18s, color .18s;
+    font-size: 15.5px;
+  }
+  .contact-list a:hover { background: var(--green-100); color: var(--green-900); }
+  .contact-list .ic {
+    width: 34px; height: 34px; flex: none; border-radius: 9px;
+    background: var(--paper-2); display: grid; place-items: center; color: var(--green-700);
+  }
+  .contact-list a:hover .ic { background: var(--white); }
+  .contact-list .ic svg { width: 17px; height: 17px; }
+  .contact-list .sub { display: block; font-size: 12.5px; color: var(--ink-3); font-family: var(--font-mono); }
+  @media (max-width: 760px) { .about { grid-template-columns: 1fr; } }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .foot {
+    border-top: 1px solid var(--line);
+    padding-block: 30px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    font-size: 14px; color: var(--ink-3);
+  }
+  .foot a { color: var(--ink-2); text-decoration: none; }
+  .foot a:hover { color: var(--green-700); }
+  .foot__left { display: flex; align-items: center; gap: 12px; }
+  .foot__dot { width: 4px; height: 4px; border-radius: 50%; background: var(--line-2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#producten">Direct naar de datatools</a>
+
+<!-- ================= HEADER ================= -->
+<header class="site-head">
+  <div class="wrap site-head__row">
+    <a class="brand" href="/" aria-label="Conteo Consulting — home">
+      <svg class="brand__mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="#133A66"/>
+        <path d="M16 6 L25 11 V21 L16 26 L7 21 V11 Z" stroke="#D4A017" stroke-width="1.6" fill="none"/>
+        <path d="M16 6 V26 M7 11 L25 21 M25 11 L7 21" stroke="#5E89BE" stroke-width="1" opacity="0.8"/>
+        <circle cx="16" cy="16" r="2.4" fill="#FAFAF7"/>
+      </svg>
+      <span class="brand__name">Conteo&nbsp;Consulting <span>· datatools</span></span>
+    </a>
+    <a class="site-head__cta" href="#producten">
+      <span class="dot"></span> <span id="headcount"></span> · DSO / Omgevingswet
+    </a>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <svg class="hero__mesh" id="mesh" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="hero__fade"></div>
+  <div class="wrap hero__inner">
+    <span class="eyebrow"><span class="pin"></span> Civic-tech · open data · Omgevingswet</span>
+    <h1>Open datatools voor de <em>Omgevingswet</em></h1>
+    <p class="hero__lead">
+      Open, publiek toegankelijke tools rond de Omgevingswet en het DSO.
+    </p>
+  </div>
+</section>
+
+<!-- ================= PRODUCTEN ================= -->
+<main id="producten" class="section">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="sec-head__title">De datatools</h2>
+      <span class="sec-head__count" id="toolcount"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+
+<!-- ================= OVER ================= -->
+<section class="section section--alt" id="over">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="sec-head__title">Over</h2>
+    </div>
+    <div class="about">
+      <div>
+        <p class="about__lead">
+          Ik ben <strong>Richard de Graaf</strong> — zelfstandig DSO- en Omgevingswet-consultant
+          onder de naam Conteo Consulting.
+        </p>
+        <p class="about__body">
+          De overgang naar de Omgevingswet is complex en de data ligt verspreid over het DSO,
+          officiële bekendmakingen en lokale omgevingsdocumenten. Ik bouw open, publiek
+          toegankelijke tools die deze data ontsluiten en begrijpelijk maken — voor
+          beleidsmakers, juristen, ontwikkelaars en geïnteresseerde inwoners. Geen black box:
+          de bronnen zijn transparant en de tools zijn voor iedereen te gebruiken. Heb je een
+          vraag, idee of samenwerking in gedachten? Ik hoor het graag.
+        </p>
+      </div>
+      <aside class="about__aside">
+        <h3>Contact</h3>
+        <ul class="contact-list">
+          <li>
+            <a href="mailto:richard.de.graaf@conteo-consulting.nl">
+              <span class="ic" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+              </span>
+              <span>E-mail<span class="sub">richard.de.graaf@conteo-consulting.nl</span></span>
+            </a>
+          </li>
+          <li>
+            <a href="https://www.linkedin.com/in/richarddegraaf1/" target="_blank" rel="noopener">
+              <span class="ic" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0-.02-5ZM3 9h4v12H3V9Zm6 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21H9V9Z"/></svg>
+              </span>
+              <span>LinkedIn<span class="sub">/in/richarddegraaf1</span></span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="foot wrap">
+  <div class="foot__left">
+    <span>© <span id="yr"></span> Conteo Consulting</span>
+    <span class="foot__dot"></span>
+    <span>Open datatools · Omgevingswet &amp; DSO</span>
+  </div>
+  <div>
+    <a href="mailto:richard.de.graaf@conteo-consulting.nl">richard.de.graaf@conteo-consulting.nl</a>
+  </div>
+</footer>
+
+<script>
+/* =====================================================================
+   PRODUCTDATA — voeg hier eenvoudig nieuwe kaarten toe.
+   Pas later simpel de OCD-viewer 'url' aan van localhost naar de
+   echte URL, en zet 'internal' op false zodra die extern live staat.
+   ===================================================================== */
+const PRODUCTS = [
+  {
+    name: "OCD-viewer",
+    url: "http://localhost:4202",
+    internal: true,               // localhost → zelfde tabblad
+    status: "dev",                // 'live' | 'dev' | 'soon'
+    statusLabel: "Lokaal / dev",
+    icon: "layers",
+    media: "map",
+    pitch: "Van locatie naar de geldende regels — kaart, documenten en AI in één.",
+    tags: ["viewer", "kaart", "regels"]
+  },
+  {
+    name: "Omgevingsvergunningenregister",
+    url: "https://omgevingsvergunningenregister.nl",
+    status: "live",
+    statusLabel: "Live",
+    icon: "search",
+    media: "dots",
+    pitch: "Doorzoek alle omgevingsvergunning-kennisgevingen van heel Nederland.",
+    tags: ["register", "vergunningen", "zoeken"]
+  },
+  {
+    name: "Omgevingsbot",
+    url: "https://omgevingsbot.nl",
+    status: "soon",
+    statusLabel: "In ontwikkeling",
+    icon: "chat",
+    media: "chat",
+    pitch: "Stel je vraag over de regels op een locatie.",
+    tags: ["AI", "chat", "regels"]
+  },
+  {
+    name: "Annotatieconformiteit",
+    url: "https://annotatieconformiteit.nl",
+    status: "live",
+    statusLabel: "Live",
+    icon: "shield",
+    media: "bars",
+    pitch: "Hoe goed voldoen omgevingsdocumenten aan de DSO-standaarden?",
+    tags: ["kwaliteit", "annotaties", "DSO-standaarden"]
+  },
+  {
+    name: "Ponsenkaart",
+    url: "https://ponsenkaart.nl",
+    status: "live",
+    statusLabel: "Live",
+    icon: "grid",
+    media: "choropleth",
+    pitch: "Hoe ver is Nederland met de overgang van oude bestemmingsplannen naar het omgevingsplan?",
+    tags: ["kaart", "transitie", "gemeenten"]
+  }
+];
+
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+
+/* Lijn-iconen per tool — verwijzen naar wat de tool doet (kaart/data-signatuur) */
+const ICONS = {
+  // gestapelde kaartlagen — 'regelmix' uit meerdere documenten
+  layers: '<path d="m12 3 8.5 4.5L12 12 3.5 7.5 12 3Z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 16.5 8.5 4.5 8.5-4.5"/>',
+  // vergrootglas over regels — doorzoekbaar register
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4-4"/><path d="M8 9.5h5M8 12h3.5"/>',
+  // chatbubbel met sparkle — AI-assistent
+  chat:   '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v8A1.5 1.5 0 0 1 18.5 15H10l-4 4v-4H5.5A1.5 1.5 0 0 1 4 13.5v-8Z"/><path d="M12.2 7.1l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7.7-1.9Z" fill="currentColor" stroke="none"/>',
+  // schild met vink — conformiteit/kwaliteit
+  shield: '<path d="M12 3 19 5.4v4.8c0 4.2-2.9 7.4-7 8.6-4.1-1.2-7-4.4-7-8.6V5.4L12 3Z"/><path d="m9 11.5 2 2 4-4"/>',
+  // raster met geponste cel — voortgang per gemeente
+  grid:   '<rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" fill="currentColor" stroke="none"/>'
+};
+function iconSVG(name) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + '</svg>';
+}
+
+/* =====================================================================
+   THEMATISCHE KAART-VISUALS — per tool een eigen, data/kaart-achtige
+   preview (geen stockfoto's). Allemaal op viewBox 320×156.
+   Wil je later echte screenshots? Vervang mediaSVG() door een <img>.
+   ===================================================================== */
+function rng(seed) { return () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; }
+
+// 1 — OCD-viewer: kadastrale kaart met percelen, wegen en een locatiepin
+function mediaMap() {
+  const W = 320, H = 156, cols = 5, rows = 3, rnd = rng(11), P = [];
+  for (let r = 0; r <= rows; r++) for (let c = 0; c <= cols; c++)
+    P.push({ x: (c / cols) * (W + 44) - 22 + (rnd() - 0.5) * 26,
+             y: (r / rows) * (H + 44) - 22 + (rnd() - 0.5) * 22 });
+  const id = (c, r) => r * (cols + 1) + c;
+  let s = `<rect width="${W}" height="${H}" fill="#E6EEF8"/>`;
+  [[1,0,'#2563A8',0.10],[3,1,'#D4A017',0.17],[0,2,'#2563A8',0.07],[4,0,'#2563A8',0.06],[2,2,'#D4A017',0.10]]
+    .forEach(([c,r,col,op]) => { const a=P[id(c,r)],b=P[id(c+1,r)],e=P[id(c+1,r+1)],d=P[id(c,r+1)];
+      s += `<polygon points="${a.x},${a.y} ${b.x},${b.y} ${e.x},${e.y} ${d.x},${d.y}" fill="${col}" opacity="${op}"/>`; });
+  s += `<g stroke="#2563A8" stroke-width="1" fill="none" opacity="0.34">`;
+  for (let r=0;r<=rows;r++){ let d=''; for(let c=0;c<=cols;c++){const p=P[id(c,r)]; d+=(c?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)+' ';} s+=`<path d="${d}"/>`; }
+  for (let c=0;c<=cols;c++){ let d=''; for(let r=0;r<=rows;r++){const p=P[id(c,r)]; d+=(r?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)+' ';} s+=`<path d="${d}"/>`; }
+  s += `</g>`;
+  s += `<g transform="translate(176,70)">
+    <ellipse cx="0" cy="20" rx="12" ry="3.5" fill="#133A66" opacity="0.18"/>
+    <circle cx="0" cy="-2" r="19" fill="none" stroke="#D4A017" stroke-width="2" opacity="0.5"/>
+    <path d="M0 18 C 11 2 10 -12 0 -14 C -10 -12 -11 2 0 18 Z" fill="#133A66"/>
+    <circle cx="0" cy="-4" r="5.4" fill="#FAFAF7"/>
+  </g>`;
+  return s;
+}
+
+// 2 — Register: puntenwolk (NL) met zoek-loep
+function mediaDots() {
+  const W = 320, H = 156, rnd = rng(29), cx = 150, cy = 82, rx = 122, ry = 60;
+  let s = `<rect width="${W}" height="${H}" fill="#EFF3F9"/>`;
+  for (let i = 0; i < 74; i++) {
+    const a = rnd() * Math.PI * 2, rr = Math.sqrt(rnd());
+    const x = cx + Math.cos(a) * rx * rr * (0.58 + rnd() * 0.42);
+    const y = cy + Math.sin(a) * ry * rr;
+    const big = rnd() > 0.87, col = big ? '#D4A017' : '#2563A8';
+    const r = big ? 2.8 : 1.7, op = big ? 0.92 : (0.22 + rnd() * 0.4);
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${col}" opacity="${op.toFixed(2)}"/>`;
+  }
+  s += `<g transform="translate(208,60)">
+    <circle r="27" fill="#FAFAF7" opacity="0.6"/>
+    <circle r="27" fill="none" stroke="#133A66" stroke-width="2.5"/>
+    <line x1="19" y1="19" x2="35" y2="35" stroke="#133A66" stroke-width="3.6" stroke-linecap="round"/>
+    <circle cx="-5" cy="-5" r="2.4" fill="#D4A017"/>
+    <circle cx="6" cy="1" r="1.9" fill="#2563A8"/>
+    <circle cx="-3" cy="8" r="1.7" fill="#2563A8"/>
+  </g>`;
+  return s;
+}
+
+// 3 — Omgevingsbot: chat-uitsnede met AI-antwoord
+function mediaChat() {
+  const W = 320, H = 156;
+  let s = `<rect width="${W}" height="${H}" fill="#E6EEF8"/>`;
+  s += `<g>
+    <rect x="28" y="24" width="156" height="40" rx="12" fill="#FFFFFF" stroke="#E4E2D8"/>
+    <rect x="44" y="36" width="104" height="5" rx="2.5" fill="#C4CBC6"/>
+    <rect x="44" y="48" width="66" height="5" rx="2.5" fill="#D6DBD7"/>
+  </g>`;
+  s += `<g>
+    <rect x="100" y="82" width="196" height="52" rx="13" fill="#133A66"/>
+    <rect x="116" y="96" width="146" height="5" rx="2.5" fill="#9BBBDC"/>
+    <rect x="116" y="108" width="120" height="5" rx="2.5" fill="#5E89BE"/>
+    <rect x="116" y="120" width="80" height="5" rx="2.5" fill="#3F6EA3"/>
+  </g>`;
+  s += `<g transform="translate(100,108)">
+    <circle r="15" fill="#D4A017"/>
+    <path d="M0 -7.5 l1.7 4.6 4.6 1.7 -4.6 1.7 -1.7 4.6 -1.7 -4.6 -4.6 -1.7 4.6 -1.7 Z" fill="#133A66"/>
+  </g>`;
+  return s;
+}
+
+// 4 — Annotatieconformiteit: ranglijst met scorebalken
+function mediaBars() {
+  const W = 320, H = 156;
+  const rows = [230, 196, 168, 134, 102];
+  let s = `<rect width="${W}" height="${H}" fill="#EFF3F9"/>`;
+  let y = 22;
+  rows.forEach((w, i) => {
+    s += `<circle cx="30" cy="${y + 9}" r="9.5" fill="#fff" stroke="#E4E2D8"/>`;
+    s += `<text x="30" y="${y + 12.5}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#7C837F">${i + 1}</text>`;
+    s += `<rect x="50" y="${y}" width="248" height="18" rx="9" fill="#E7E6DE"/>`;
+    const col = i === 0 ? '#D4A017' : '#2563A8';
+    s += `<rect x="50" y="${y}" width="${w}" height="18" rx="9" fill="${col}" opacity="${i === 0 ? 1 : (0.9 - i * 0.12).toFixed(2)}"/>`;
+    y += 26;
+  });
+  return s;
+}
+
+// 5 — Ponsenkaart: tegel-choropleth + voortgangsbalk
+function mediaChoro() {
+  const W = 320, H = 156, cols = 8, rows = 4, gap = 6, pad = 18, top = 20, ch = 18;
+  const cw = (W - pad * 2 - gap * (cols - 1)) / cols;
+  const rnd = rng(53);
+  const skip = new Set(['0,0','0,3','1,3','6,0','7,0','7,3']);
+  let s = `<rect width="${W}" height="${H}" fill="#E6EEF8"/>`;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    if (skip.has(c + ',' + r)) continue;
+    const x = pad + c * (cw + gap), y = top + r * (ch + gap), v = rnd();
+    const fill = v > 0.5 ? '#2563A8' : '#133A66';
+    const op = v > 0.5 ? (0.35 + v * 0.6).toFixed(2) : '0.08';
+    s += `<rect x="${x.toFixed(1)}" y="${y}" width="${cw.toFixed(1)}" height="${ch}" rx="3.5" fill="${fill}" opacity="${op}"/>`;
+    s += `<rect x="${x.toFixed(1)}" y="${y}" width="${cw.toFixed(1)}" height="${ch}" rx="3.5" fill="none" stroke="#2563A8" stroke-width="0.8" opacity="0.18"/>`;
+  }
+  const by = top + rows * (ch + gap) + 4;
+  s += `<text x="${W - pad}" y="${by - 5}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="#2563A8">62%</text>`;
+  s += `<rect x="${pad}" y="${by}" width="${W - pad * 2}" height="8" rx="4" fill="#DDE2DD"/>`;
+  s += `<rect x="${pad}" y="${by}" width="${(W - pad * 2) * 0.62}" height="8" rx="4" fill="#D4A017"/>`;
+  return s;
+}
+
+const MEDIA = { map: mediaMap, dots: mediaDots, chat: mediaChat, bars: mediaBars, choropleth: mediaChoro };
+function mediaSVG(name) {
+  const fn = MEDIA[name];
+  return `<svg class="media" viewBox="0 0 320 156" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${fn ? fn() : ''}</svg>`;
+}
+
+/* Zachte afbreekpunten in lange samengestelde namen, zodat titels netjes
+   afbreken in smalle kaarten (\u00AD = soft hyphen, onzichtbaar tot afbreken). */
+function softHyphenate(s) {
+  return s
+    .replace(/(Omgevings)(?=[a-z])/g, '$1\u00AD')
+    .replace(/(vergunningen)(?=[a-z])/g, '$1\u00AD')
+    .replace(/(Annotatie)(?=[a-z])/g, '$1\u00AD');
+}
+
+function cardHTML(p, i) {
+  const index = String(i + 1).padStart(2, "0");
+  const tags = p.tags.map(t => `<span class="tag">${t}</span>`).join("");
+  const badge = `<span class="badge badge--${p.status}"><span class="led"></span>${p.statusLabel}</span>`;
+  const arrow = p.url ? `<span class="card__arrow">${ARROW}</span>` : "";
+  const ext = p.url && !p.internal;
+  const attrs = ext ? ' target="_blank" rel="noopener"' : "";
+  const aria = ext ? ` aria-label="${p.name} — opent in nieuw tabblad"` : "";
+  const display = softHyphenate(p.name);
+  const title = p.url
+    ? `<a class="card__link" href="${p.url}"${attrs}${aria}>${display}</a>`
+    : display;
+
+  return `
+    <article class="card">
+      <span class="card__accent" aria-hidden="true"></span>
+      <div class="card__media">
+        ${mediaSVG(p.media)}
+        <span class="card__index">${index}</span>
+        ${badge}
+        <span class="card__icon">${iconSVG(p.icon)}</span>
+      </div>
+      <div class="card__body">
+        <h3>${title}</h3>
+        <p class="card__pitch">${p.pitch}</p>
+        <div class="card__foot">
+          <div class="tags">${tags}</div>
+          ${arrow}
+        </div>
+      </div>
+    </article>`;
+}
+
+document.getElementById("grid").innerHTML = PRODUCTS.map(cardHTML).join("");
+const liveCount = PRODUCTS.filter(p => p.status === "live").length;
+document.getElementById("toolcount").textContent =
+  PRODUCTS.length + " tools · " + liveCount + " live";
+document.getElementById("headcount").textContent =
+  liveCount + " live tool" + (liveCount === 1 ? "" : "s");
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+/* ---------- Hero polygoon-mesh (subtiel, generatief) ---------- */
+(function buildMesh() {
+  const svg = document.getElementById("mesh");
+  const W = 1200, H = 560;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const cols = 9, rows = 5;
+  const pts = [];
+  const seed = 7;
+  // pseudo-random, deterministisch
+  let s = seed;
+  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  for (let r = 0; r <= rows; r++) {
+    for (let c = 0; c <= cols; c++) {
+      const jx = (rnd() - 0.5) * (W / cols) * 0.6;
+      const jy = (rnd() - 0.5) * (H / rows) * 0.6;
+      pts.push({
+        x: (c / cols) * W + jx,
+        y: (r / rows) * H + jy,
+        c, r
+      });
+    }
+  }
+  const idx = (c, r) => r * (cols + 1) + c;
+  const lines = [];
+  const tris = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const a = pts[idx(c, r)], b = pts[idx(c + 1, r)],
+            d = pts[idx(c, r + 1)], e = pts[idx(c + 1, r + 1)];
+      lines.push([a, b], [a, d]);
+      // diagonale verdeling
+      if ((c + r) % 2 === 0) { lines.push([a, e]); tris.push([a, b, e], [a, e, d]); }
+      else { lines.push([b, d]); tris.push([a, b, d], [b, e, d]); }
+    }
+  }
+  // rechterrand + onderrand sluiten
+  for (let r = 0; r < rows; r++) lines.push([pts[idx(cols, r)], pts[idx(cols, r + 1)]]);
+  for (let c = 0; c < cols; c++) lines.push([pts[idx(c, rows)], pts[idx(c + 1, rows)]]);
+
+  let out = "";
+  // een paar zachte gevulde polygonen voor diepte
+  const fills = [[2,1],[5,0],[7,2],[3,3],[6,3]];
+  fills.forEach(([c, r], k) => {
+    const a = pts[idx(c, r)], b = pts[idx(c + 1, r)], e = pts[idx(c + 1, r + 1)], d = pts[idx(c, r + 1)];
+    const op = 0.05 + (k % 2) * 0.03;
+    const col = k % 2 ? "#D4A017" : "#133A66";
+    out += `<polygon points="${a.x},${a.y} ${b.x},${b.y} ${e.x},${e.y} ${d.x},${d.y}" fill="${col}" opacity="${op}"/>`;
+  });
+  lines.forEach(([p, q]) => {
+    out += `<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="#133A66" stroke-width="1" opacity="0.16"/>`;
+  });
+  pts.forEach(p => {
+    out += `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#133A66" opacity="0.22"/>`;
+  });
+  svg.innerHTML = out;
+})();
+</script>
+</body>
+</html>
