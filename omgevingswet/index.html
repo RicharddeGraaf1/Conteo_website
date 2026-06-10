@@ -122,6 +122,21 @@
   .site-head__cta .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
   @media (max-width: 560px) { .site-head__cta { display: none; } }
 
+  /* Terug-naar-home knop */
+  .back-home {
+    font-family: var(--font-mono); font-size: 13px; color: var(--ink-2);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 13px; border: 1px solid var(--line); border-radius: 7px;
+    background: var(--white); white-space: nowrap;
+    transition: color .18s, border-color .18s, background .18s;
+  }
+  .back-home:hover {
+    color: var(--green-700);
+    border-color: color-mix(in srgb, var(--green-700) 38%, var(--line));
+  }
+  .back-home svg { width: 14px; height: 14px; flex: none; }
+  @media (max-width: 380px) { .back-home .label { display: none; } }
+
   /* ============================================================
      HERO + polygoon/topografisch motief
      ============================================================ */
@@ -413,8 +428,9 @@
       </svg>
       <span class="brand__name">Conteo&nbsp;Consulting <span>· datatools</span></span>
     </a>
-    <a class="site-head__cta" href="#producten">
-      <span class="dot"></span> <span id="headcount"></span> · DSO / Omgevingswet
+    <a class="back-home" href="/" aria-label="Terug naar de homepage van elconteo.nl">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      <span class="label">Terug naar Home</span>
     </a>
   </div>
 </header>
@@ -747,8 +763,6 @@ document.getElementById("grid").innerHTML = PRODUCTS.map(cardHTML).join("");
 const liveCount = PRODUCTS.filter(p => p.status === "live").length;
 document.getElementById("toolcount").textContent =
   PRODUCTS.length + " tools · " + liveCount + " live";
-document.getElementById("headcount").textContent =
-  liveCount + " live tool" + (liveCount === 1 ? "" : "s");
 document.getElementById("yr").textContent = new Date().getFullYear();
 
 /* ---------- Hero polygoon-mesh (subtiel, generatief) ---------- */
