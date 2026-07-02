@@ -1,0 +1,10 @@
+# Bestanden die NOOIT naar Cloudflare Pages geüpload mogen worden.
+# De deploy-workflow draait `wrangler pages deploy .`; dit vangt secrets/meta af.
+.env
+.env.*
+.git
+.github
+.gitignore
+node_modules
+*.log
+.DS_Store

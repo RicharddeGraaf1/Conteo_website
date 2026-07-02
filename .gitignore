@@ -1,0 +1,9 @@
+# Secrets — nooit committen (deploy-token hoort in GitHub Secrets)
+.env
+.env.*
+
+# Ruis
+node_modules/
+.wrangler/
+.DS_Store
+*.log
