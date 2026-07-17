@@ -138,71 +138,27 @@
   @media (max-width: 380px) { .back-home .label { display: none; } }
 
   /* ============================================================
-     HERO + polygoon/topografisch motief
+     PAGE-HEAD — compacte titelregel i.p.v. hero, alles boven de vouw
      ============================================================ */
-  .hero { position: relative; overflow: hidden; }
-  .hero__mesh {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 0;
+  .page-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 8px 18px; flex-wrap: wrap; margin-bottom: 16px;
   }
-  .hero__fade {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background:
-      radial-gradient(120% 90% at 80% -10%, transparent 40%, var(--paper) 78%),
-      linear-gradient(to bottom, transparent 55%, var(--paper) 100%);
+  .page-head h1 {
+    font-size: clamp(20px, 2.4vw, 25px);
+    line-height: 1.1; letter-spacing: -0.02em; font-weight: 700;
+    color: var(--green-900); text-wrap: balance;
   }
-  .hero__inner {
-    position: relative; z-index: 2;
-    padding-top: clamp(18px, 2.6vw, 34px);
-    padding-bottom: clamp(14px, 2vw, 24px);
-    max-width: 720px;
+  .page-head h1 em { font-style: normal; color: var(--ochre); }
+  .page-head__sub {
+    margin-top: 4px; font-size: 14px; color: var(--ink-2); text-wrap: pretty;
   }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 9px;
-    font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.02em;
-    color: var(--green-700);
-    background: var(--white);
-    border: 1px solid var(--line);
-    padding: 6px 12px; border-radius: 7px;
-    box-shadow: none;
-  }
-  .eyebrow .pin {
-    width: 8px; height: 8px; border-radius: 2px;
-    background: var(--ochre); transform: rotate(45deg);
-  }
-  .hero h1 {
-    margin-top: 13px;
-    font-size: clamp(26px, 4vw, 41px);
-    line-height: 1.05;
-    letter-spacing: -0.025em;
-    font-weight: 700;
-    color: var(--green-900);
-    text-wrap: balance;
-  }
-  .hero h1 em { font-style: normal; color: var(--ochre); }
-  .hero__lead {
-    margin-top: 11px;
-    font-size: clamp(15px, 1.9vw, 17.5px);
-    line-height: 1.5;
-    color: var(--ink-2);
-    max-width: 60ch;
-    text-wrap: pretty;
-  }
-  .hero__meta {
-    margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px 8px; align-items: center;
-  }
-  .metachip {
-    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-2);
-    background: var(--white); border: 1px solid var(--line);
-    padding: 5px 11px; border-radius: var(--r-chip);
-  }
-  .metachip strong { color: var(--green-900); font-weight: 600; }
 
   /* ============================================================
      SECTIE-KOP
      ============================================================ */
-  .section { padding-block: clamp(40px, 6vw, 64px); }
-  #producten { padding-top: clamp(14px, 2vw, 24px); }
+  .section { padding-block: clamp(22px, 3.2vw, 36px); }
+  #producten { padding-top: clamp(14px, 1.8vw, 20px); }
   .section--alt { background: var(--paper-2); border-block: 1px solid var(--line); }
   .sec-head {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -223,7 +179,7 @@
      PRODUCT-GRID
      ============================================================ */
   .grid {
-    display: grid; gap: 16px;
+    display: grid; gap: 13px;
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   @media (max-width: 1080px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -248,7 +204,7 @@
 
   /* Visuele header — thematische kaart/grafiek-preview per tool */
   .card__media {
-    position: relative; height: 156px; overflow: hidden;
+    position: relative; height: 92px; overflow: hidden;
     border-bottom: 1px solid var(--line);
   }
   .card__media svg.media { width: 100%; height: 100%; display: block; }
@@ -256,65 +212,65 @@
   .card__index,
   .card__icon { pointer-events: none; }
   .card__index {
-    position: absolute; top: 12px; left: 13px; z-index: 4;
-    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em;
+    position: absolute; top: 9px; left: 10px; z-index: 4;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
     color: var(--ink-2);
     background: color-mix(in srgb, var(--white) 78%, transparent);
     padding: 3px 7px; border-radius: 5px;
     -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
   }
   .card__media .badge {
-    position: absolute; top: 11px; right: 12px; z-index: 4;
+    position: absolute; top: 8px; right: 9px; z-index: 4;
     box-shadow: 0 1px 3px rgba(27,31,29,.12);
   }
   .card__icon {
-    position: absolute; left: 18px; bottom: -22px; z-index: 5;
-    width: 44px; height: 44px; border-radius: 9px;
+    position: absolute; left: 14px; bottom: -16px; z-index: 5;
+    width: 34px; height: 34px; border-radius: 8px;
     display: grid; place-items: center;
     background: var(--white); border: 1px solid var(--line-2);
     box-shadow: none;
     transition: background .24s, color .24s, transform .24s, border-color .24s;
   }
-  .card__icon svg { width: 23px; height: 23px; }
+  .card__icon svg { width: 18px; height: 18px; }
 
   .card__body {
     display: flex; flex-direction: column; flex: 1 1 auto;
-    padding: 32px 20px 18px;
+    padding: 24px 15px 12px;
   }
   .card h3 {
-    font-size: 19px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.18;
+    font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2;
     overflow-wrap: anywhere; hyphens: auto;
   }
   .card__pitch {
-    margin-top: 8px; font-size: 14.5px; line-height: 1.5; text-wrap: pretty;
+    margin-top: 6px; font-size: 12.5px; line-height: 1.45; text-wrap: pretty;
     overflow-wrap: break-word; hyphens: auto;
     flex: 1 1 auto;
   }
   .card__foot {
-    margin-top: 16px; display: flex; align-items: center;
-    justify-content: space-between; gap: 14px;
+    margin-top: 10px; display: flex; align-items: center;
+    justify-content: space-between; gap: 10px;
   }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none; }
   .tag {
-    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.01em;
-    padding: 4px 9px; border-radius: 4px; white-space: nowrap;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.01em;
+    padding: 3px 7px; border-radius: 4px; white-space: nowrap;
   }
   .card__arrow {
-    flex: none; width: 30px; height: 30px; border-radius: 50%; pointer-events: none;
+    flex: none; width: 25px; height: 25px; border-radius: 50%; pointer-events: none;
     display: grid; place-items: center;
     transition: transform .22s, background .22s;
   }
-  .card__arrow svg { width: 15px; height: 15px; }
+  .card__arrow svg { width: 13px; height: 13px; }
 
   /* Status-badge */
   .badge {
-    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+    font-family: var(--font-mono); font-size: 10px; font-weight: 500;
     letter-spacing: 0.02em;
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px 4px 8px; border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px 3px 7px; border-radius: 6px;
     white-space: nowrap;
   }
-  .badge .led { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .badge .led { width: 6px; height: 6px; border-radius: 50%; flex: none; }
   .badge--live { background: var(--live-bg); color: var(--live); }
   .badge--live .led { background: var(--live); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 18%, transparent); }
   .badge--dev  { background: var(--dev-bg); color: var(--dev); }
@@ -362,12 +318,7 @@
     display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(28px, 5vw, 56px);
     align-items: start;
   }
-  .about__lead {
-    font-size: clamp(19px, 2.4vw, 22px); line-height: 1.5; letter-spacing: -0.01em;
-    color: var(--ink); text-wrap: pretty;
-  }
-  .about__lead strong { color: var(--green-900); font-weight: 600; }
-  .about__body { margin-top: 18px; color: var(--ink-2); font-size: 16px; line-height: 1.65; max-width: 60ch; text-wrap: pretty; }
+  .about__body { color: var(--ink-2); font-size: 16px; line-height: 1.65; max-width: 60ch; text-wrap: pretty; }
   .about__aside {
     background: var(--white); border: 1px solid var(--line); border-radius: var(--r-card);
     padding: 24px; box-shadow: var(--shadow-1);
@@ -435,24 +386,14 @@
   </div>
 </header>
 
-<!-- ================= HERO ================= -->
-<section class="hero">
-  <svg class="hero__mesh" id="mesh" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
-  <div class="hero__fade"></div>
-  <div class="wrap hero__inner">
-    <span class="eyebrow"><span class="pin"></span> Civic-tech · open data · Omgevingswet</span>
-    <h1>Open datatools voor de <em>Omgevingswet</em></h1>
-    <p class="hero__lead">
-      Open, publiek toegankelijke tools rond de Omgevingswet en het DSO.
-    </p>
-  </div>
-</section>
-
 <!-- ================= PRODUCTEN ================= -->
 <main id="producten" class="section">
   <div class="wrap">
-    <div class="sec-head">
-      <h2 class="sec-head__title">De datatools</h2>
+    <div class="page-head">
+      <div>
+        <h1>Open datatools voor de <em>Omgevingswet</em></h1>
+        <p class="page-head__sub">Open, publiek toegankelijke tools rond de Omgevingswet en het DSO.</p>
+      </div>
       <span class="sec-head__count" id="toolcount"></span>
     </div>
     <div class="grid" id="grid"></div>
@@ -463,14 +404,10 @@
 <section class="section section--alt" id="over">
   <div class="wrap">
     <div class="sec-head">
-      <h2 class="sec-head__title">Over</h2>
+      <h2 class="sec-head__title">Waarom</h2>
     </div>
     <div class="about">
       <div>
-        <p class="about__lead">
-          Ik ben <strong>Richard de Graaf</strong> — zelfstandig DSO- en Omgevingswet-consultant
-          onder de naam Conteo Consulting.
-        </p>
         <p class="about__body">
           De overgang naar de Omgevingswet is complex en de data ligt verspreid over het DSO,
           officiële bekendmakingen en lokale omgevingsdocumenten. Ik bouw open, publiek
@@ -574,6 +511,26 @@ const PRODUCTS = [
     media: "choropleth",
     pitch: "Hoe ver is Nederland met de overgang van oude bestemmingsplannen naar het omgevingsplan?",
     tags: ["kaart", "transitie", "gemeenten"]
+  },
+  {
+    name: "Monitor instructieregels",
+    url: "https://instructieregels.nl",
+    status: "live",
+    statusLabel: "Live",
+    icon: "rules",
+    media: "coverage",
+    pitch: "In hoeveel omgevingsplannen zijn de instructieregels van Rijk en provincies terug te vinden?",
+    tags: ["instructieregels", "omgevingsplan"]
+  },
+  {
+    name: "DSO Implementatiemonitor",
+    url: "https://dso-implementatiemonitor.nl",
+    status: "live",
+    statusLabel: "Live",
+    icon: "pulse",
+    media: "trend",
+    pitch: "De 149 indicatoren van de Monitor Werking Omgevingswet, actueel gemeten uit DSO-data.",
+    tags: ["indicatoren", "DSO"]
   }
 ];
 
@@ -590,7 +547,11 @@ const ICONS = {
   // schild met vink — conformiteit/kwaliteit
   shield: '<path d="M12 3 19 5.4v4.8c0 4.2-2.9 7.4-7 8.6-4.1-1.2-7-4.4-7-8.6V5.4L12 3Z"/><path d="m9 11.5 2 2 4-4"/>',
   // raster met geponste cel — voortgang per gemeente
-  grid:   '<rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" fill="currentColor" stroke="none"/>'
+  grid:   '<rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" fill="currentColor" stroke="none"/>',
+  // document met regelrijen — instructieregels die doorwerken in plannen
+  rules:  '<path d="M6.5 4.5h8l3 3v12h-11v-15Z"/><path d="M14.5 4.5v3h3"/><path d="M9.5 11.5h5M9.5 14.5h5M9.5 17.5h3"/>',
+  // meetlijn/hartslag — implementatie actueel gemeten
+  pulse:  '<path d="M3.5 13h4l2-6 3.5 10 2.5-7 1.5 3h3.5"/><path d="M3.5 19.5h17"/>'
 };
 function iconSVG(name) {
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + '</svg>';
@@ -711,7 +672,58 @@ function mediaChoro() {
   return s;
 }
 
-const MEDIA = { map: mediaMap, dots: mediaDots, chat: mediaChat, bars: mediaBars, choropleth: mediaChoro };
+// 6 — Monitor instructieregels: regelrijen (Rijk/provincie) met dekkingsbalk
+function mediaCoverage() {
+  const W = 320, H = 156;
+  const rows = [
+    { src: '#8a4b2f', label: 96, cov: 0.82 },   // rijk (warm bruin, conform de tool zelf)
+    { src: '#2563A8', label: 72, cov: 0.55 },
+    { src: '#8a4b2f', label: 110, cov: 0.68 },
+    { src: '#2563A8', label: 84, cov: 0.34 },
+    { src: '#8a4b2f', label: 60, cov: 0.91 }
+  ];
+  let s = `<rect width="${W}" height="${H}" fill="#EFF3F9"/>`;
+  let y = 20;
+  rows.forEach((r) => {
+    s += `<rect x="20" y="${y + 3}" width="12" height="12" rx="3" fill="${r.src}" opacity="0.85"/>`;
+    s += `<rect x="42" y="${y + 6.5}" width="${r.label}" height="5" rx="2.5" fill="#C4CBC6"/>`;
+    s += `<rect x="170" y="${y}" width="128" height="18" rx="9" fill="#E7E6DE"/>`;
+    const col = r.cov > 0.8 ? '#D4A017' : '#2563A8';
+    s += `<rect x="170" y="${y}" width="${(128 * r.cov).toFixed(0)}" height="18" rx="9" fill="${col}" opacity="0.9"/>`;
+    y += 24;
+  });
+  return s;
+}
+
+// 7 — DSO Implementatiemonitor: jaarreeksen 2024–2026 als trendlijnen
+function mediaTrend() {
+  const W = 320, H = 156, pad = 26, base = 118, top = 24;
+  let s = `<rect width="${W}" height="${H}" fill="#E6EEF8"/>`;
+  for (let i = 0; i < 4; i++) {
+    const gy = top + i * ((base - top) / 3);
+    s += `<line x1="${pad}" y1="${gy}" x2="${W - pad}" y2="${gy}" stroke="#2563A8" stroke-width="0.8" opacity="0.14"/>`;
+  }
+  const xs = [pad, 88, 150, 212, W - pad];
+  const line = (ys, col, w, op) => {
+    let d = '';
+    xs.forEach((x, i) => { d += (i ? 'L' : 'M') + x + ' ' + ys[i] + ' '; });
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
+  };
+  const y1 = [112, 98, 88, 70, 52], y2 = [118, 114, 104, 96, 84];
+  let area = `M${xs[0]} ${y1[0]} `;
+  xs.forEach((x, i) => { if (i) area += `L${x} ${y1[i]} `; });
+  area += `L${xs[xs.length - 1]} ${base} L${xs[0]} ${base} Z`;
+  s += `<path d="${area}" fill="#2563A8" opacity="0.08"/>`;
+  s += line(y2, '#2563A8', 2, 0.45);
+  s += line(y1, '#D4A017', 2.5, 1);
+  xs.forEach((x, i) => { s += `<circle cx="${x}" cy="${y1[i]}" r="3.2" fill="#D4A017" stroke="#FAFAF7" stroke-width="1.4"/>`; });
+  ['2024', '2025', '2026'].forEach((yr, i) => {
+    s += `<text x="${pad + i * ((W - pad * 2) / 2)}" y="${base + 16}" text-anchor="${i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}" font-family="JetBrains Mono, monospace" font-size="10" fill="#7C837F">${yr}</text>`;
+  });
+  return s;
+}
+
+const MEDIA = { map: mediaMap, dots: mediaDots, chat: mediaChat, bars: mediaBars, choropleth: mediaChoro, coverage: mediaCoverage, trend: mediaTrend };
 function mediaSVG(name) {
   const fn = MEDIA[name];
   return `<svg class="media" viewBox="0 0 320 156" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${fn ? fn() : ''}</svg>`;
@@ -723,7 +735,9 @@ function softHyphenate(s) {
   return s
     .replace(/(Omgevings)(?=[a-z])/g, '$1\u00AD')
     .replace(/(vergunningen)(?=[a-z])/g, '$1\u00AD')
-    .replace(/(Annotatie)(?=[a-z])/g, '$1\u00AD');
+    .replace(/(Annotatie)(?=[a-z])/g, '$1\u00AD')
+    .replace(/([Ii]nstructie)(?=[a-z])/g, '$1\u00AD')
+    .replace(/([Ii]mplementatie)(?=[a-z])/g, '$1\u00AD');
 }
 
 function cardHTML(p, i) {
@@ -764,63 +778,6 @@ const liveCount = PRODUCTS.filter(p => p.status === "live").length;
 document.getElementById("toolcount").textContent =
   PRODUCTS.length + " tools · " + liveCount + " live";
 document.getElementById("yr").textContent = new Date().getFullYear();
-
-/* ---------- Hero polygoon-mesh (subtiel, generatief) ---------- */
-(function buildMesh() {
-  const svg = document.getElementById("mesh");
-  const W = 1200, H = 560;
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  const cols = 9, rows = 5;
-  const pts = [];
-  const seed = 7;
-  // pseudo-random, deterministisch
-  let s = seed;
-  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-  for (let r = 0; r <= rows; r++) {
-    for (let c = 0; c <= cols; c++) {
-      const jx = (rnd() - 0.5) * (W / cols) * 0.6;
-      const jy = (rnd() - 0.5) * (H / rows) * 0.6;
-      pts.push({
-        x: (c / cols) * W + jx,
-        y: (r / rows) * H + jy,
-        c, r
-      });
-    }
-  }
-  const idx = (c, r) => r * (cols + 1) + c;
-  const lines = [];
-  const tris = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const a = pts[idx(c, r)], b = pts[idx(c + 1, r)],
-            d = pts[idx(c, r + 1)], e = pts[idx(c + 1, r + 1)];
-      lines.push([a, b], [a, d]);
-      // diagonale verdeling
-      if ((c + r) % 2 === 0) { lines.push([a, e]); tris.push([a, b, e], [a, e, d]); }
-      else { lines.push([b, d]); tris.push([a, b, d], [b, e, d]); }
-    }
-  }
-  // rechterrand + onderrand sluiten
-  for (let r = 0; r < rows; r++) lines.push([pts[idx(cols, r)], pts[idx(cols, r + 1)]]);
-  for (let c = 0; c < cols; c++) lines.push([pts[idx(c, rows)], pts[idx(c + 1, rows)]]);
-
-  let out = "";
-  // een paar zachte gevulde polygonen voor diepte
-  const fills = [[2,1],[5,0],[7,2],[3,3],[6,3]];
-  fills.forEach(([c, r], k) => {
-    const a = pts[idx(c, r)], b = pts[idx(c + 1, r)], e = pts[idx(c + 1, r + 1)], d = pts[idx(c, r + 1)];
-    const op = 0.05 + (k % 2) * 0.03;
-    const col = k % 2 ? "#D4A017" : "#133A66";
-    out += `<polygon points="${a.x},${a.y} ${b.x},${b.y} ${e.x},${e.y} ${d.x},${d.y}" fill="${col}" opacity="${op}"/>`;
-  });
-  lines.forEach(([p, q]) => {
-    out += `<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="#133A66" stroke-width="1" opacity="0.16"/>`;
-  });
-  pts.forEach(p => {
-    out += `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#133A66" opacity="0.22"/>`;
-  });
-  svg.innerHTML = out;
-})();
 </script>
 </body>
 </html>
