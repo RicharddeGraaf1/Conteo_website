@@ -531,6 +531,16 @@ const PRODUCTS = [
     media: "trend",
     pitch: "De 149 indicatoren van de Monitor Werking Omgevingswet, actueel gemeten uit DSO-data.",
     tags: ["indicatoren", "DSO"]
+  },
+  {
+    name: "MER-register",
+    url: "",                       // zet op "https://mer-register.nl" en status:"live" zodra live
+    status: "soon",               // 'live' | 'dev' | 'soon'
+    statusLabel: "In ontwikkeling",
+    icon: "mer",
+    media: "timeline",
+    pitch: "Milieueffectrapportages en hun procesbesluiten, samengebracht uit de officiële bekendmakingen en de Commissie m.e.r.",
+    tags: ["register", "milieu", "MER"]
   }
 ];
 
@@ -551,7 +561,9 @@ const ICONS = {
   // document met regelrijen — instructieregels die doorwerken in plannen
   rules:  '<path d="M6.5 4.5h8l3 3v12h-11v-15Z"/><path d="M14.5 4.5v3h3"/><path d="M9.5 11.5h5M9.5 14.5h5M9.5 17.5h3"/>',
   // meetlijn/hartslag — implementatie actueel gemeten
-  pulse:  '<path d="M3.5 13h4l2-6 3.5 10 2.5-7 1.5 3h3.5"/><path d="M3.5 19.5h17"/>'
+  pulse:  '<path d="M3.5 13h4l2-6 3.5 10 2.5-7 1.5 3h3.5"/><path d="M3.5 19.5h17"/>',
+  // rapport-document met blad — milieueffectrapportage
+  mer:    '<path d="M6.5 4.5h8l3 3v12h-11v-15Z"/><path d="M14.5 4.5v3h3"/><path d="M9 10.5h4.5M9 13h4.5"/><path d="M12 13.6c0 2 1.5 3.4 3.3 3.4 0-1.8-1.5-3.4-3.3-3.4Z" fill="currentColor" stroke="none"/>'
 };
 function iconSVG(name) {
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + '</svg>';
@@ -723,7 +735,41 @@ function mediaTrend() {
   return s;
 }
 
-const MEDIA = { map: mediaMap, dots: mediaDots, chat: mediaChat, bars: mediaBars, choropleth: mediaChoro, coverage: mediaCoverage, trend: mediaTrend };
+// 8 — MER-register: procestijdlijn met mijlpalen + het rapport
+function mediaTimeline() {
+  const W = 320, H = 156;
+  let s = `<rect width="${W}" height="${H}" fill="#E6EEF8"/>`;
+  const y = 92, x0 = 30, x1 = 214;
+  s += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#2563A8" stroke-width="2" opacity="0.32"/>`;
+  // mijlpalen: voornemen/NRD · mer-beoordeling · terinzage MER (highlight) · vaststelling
+  const nodes = [
+    { x: 30,  hl: false },
+    { x: 91,  hl: false },
+    { x: 152, hl: true  },
+    { x: 214, hl: false }
+  ];
+  nodes.forEach((n, i) => {
+    const col = n.hl ? '#D4A017' : '#2563A8';
+    s += `<line x1="${n.x}" y1="${y}" x2="${n.x}" y2="${y - 26}" stroke="#9BBBDC" stroke-width="1" opacity="0.7"/>`;
+    s += `<rect x="${n.x - 15}" y="${y - 40}" width="30" height="12" rx="3" fill="${n.hl ? '#D4A017' : '#C4CBC6'}" opacity="${n.hl ? 0.95 : 0.7}"/>`;
+    s += `<rect x="${n.x - 11}" y="${y - 36}" width="${n.hl ? 22 : 14}" height="4" rx="2" fill="#FFFFFF" opacity="0.75"/>`;
+    if (n.hl) s += `<circle cx="${n.x}" cy="${y}" r="9" fill="none" stroke="#D4A017" stroke-width="1.6" opacity="0.5"/>`;
+    s += `<circle cx="${n.x}" cy="${y}" r="${n.hl ? 5.2 : 4}" fill="${col}" opacity="${n.hl ? 1 : 0.85}"/>`;
+  });
+  // het rapport zelf, rechts
+  s += `<g transform="translate(250,48)">
+    <rect x="7" y="7" width="46" height="60" rx="4" fill="#FFFFFF" stroke="#E4E2D8" opacity="0.65"/>
+    <rect x="0" y="0" width="46" height="60" rx="4" fill="#FFFFFF" stroke="#133A66" stroke-width="1.5"/>
+    <path d="M33 0 v11 h11" fill="none" stroke="#133A66" stroke-width="1.5"/>
+    <rect x="9" y="18" width="22" height="4" rx="2" fill="#C4CBC6"/>
+    <rect x="9" y="28" width="28" height="4" rx="2" fill="#D6DBD7"/>
+    <rect x="9" y="38" width="24" height="4" rx="2" fill="#D6DBD7"/>
+    <path d="M11 50 l3.6 3.6 L21 47" fill="none" stroke="#D4A017" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>`;
+  return s;
+}
+
+const MEDIA = { map: mediaMap, dots: mediaDots, chat: mediaChat, bars: mediaBars, choropleth: mediaChoro, coverage: mediaCoverage, trend: mediaTrend, timeline: mediaTimeline };
 function mediaSVG(name) {
   const fn = MEDIA[name];
   return `<svg class="media" viewBox="0 0 320 156" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${fn ? fn() : ''}</svg>`;
