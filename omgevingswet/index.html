@@ -457,8 +457,9 @@
 <script>
 /* =====================================================================
    PRODUCTDATA — voeg hier eenvoudig nieuwe kaarten toe.
-   Pas later simpel de OCD-viewer 'url' aan van localhost naar de
-   echte URL, en zet 'internal' op false zodra die extern live staat.
+   Zet 'internal: true' voor een link die in hetzelfde tabblad opent
+   (bv. localhost tijdens ontwikkeling); externe links openen in een
+   nieuw tabblad.
    ===================================================================== */
 const PRODUCTS = [
   {
@@ -473,10 +474,9 @@ const PRODUCTS = [
   },
   {
     name: "OCD-viewer",
-    url: "http://localhost:4202",
-    internal: true,               // localhost → zelfde tabblad
-    status: "dev",                // 'live' | 'dev' | 'soon'
-    statusLabel: "Lokaal / dev",
+    url: "https://ocd-viewer.nl",
+    status: "live",               // 'live' | 'dev' | 'soon'
+    statusLabel: "Live",
     icon: "layers",
     media: "map",
     pitch: "Van locatie naar de geldende regels — kaart, documenten en AI in één.",
