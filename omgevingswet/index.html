@@ -260,6 +260,11 @@
     overflow-wrap: break-word; hyphens: auto;
     flex: 1 1 auto;
   }
+  .card__live {
+    margin-top: 8px;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.01em;
+    color: var(--ink-3); white-space: nowrap;
+  }
   .card__foot {
     margin-top: 10px; display: flex; align-items: center;
     justify-content: space-between; gap: 10px;
@@ -471,6 +476,8 @@
 <script>
 /* =====================================================================
    PRODUCTDATA — voeg hier eenvoudig nieuwe kaarten toe.
+   'live' is de datum van livegang (ISO, YYYY-MM-DD) — wordt alleen getoond
+   bij status 'live'. Laat het veld weg zolang een tool nog niet live is.
    Zet 'internal: true' voor een link die in hetzelfde tabblad opent
    (bv. localhost tijdens ontwikkeling); externe links openen in een
    nieuw tabblad.
@@ -479,6 +486,7 @@ const PRODUCTS = [
   {
     name: "Omgevingsdocumentenregister",
     url: "https://omgevingsdocumentenregister.nl",
+    live: "2026-08-04",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "archive",
@@ -489,6 +497,7 @@ const PRODUCTS = [
   {
     name: "OCD-viewer",
     url: "https://ocd-viewer.nl",
+    live: "2026-08-15",           // eerste publieke deploy op het eigen domein
     status: "live",               // 'live' | 'dev' | 'soon'
     statusLabel: "Live",
     icon: "layers",
@@ -499,6 +508,7 @@ const PRODUCTS = [
   {
     name: "Omgevingsvergunningenregister",
     url: "https://omgevingsvergunningenregister.nl",
+    live: "2026-06-01",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "search",
@@ -509,6 +519,7 @@ const PRODUCTS = [
   {
     name: "Omgevingsbot",
     url: "https://omgevingsbot.nl",
+    live: "2026-03-12",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "chat",
@@ -519,6 +530,7 @@ const PRODUCTS = [
   {
     name: "Annotatieconformiteit",
     url: "https://annotatieconformiteit.nl",
+    live: "2026-03-11",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "shield",
@@ -529,6 +541,7 @@ const PRODUCTS = [
   {
     name: "Ponsenkaart",
     url: "https://ponsenkaart.nl",
+    live: "2026-05-26",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "grid",
@@ -539,6 +552,7 @@ const PRODUCTS = [
   {
     name: "Monitor instructieregels",
     url: "https://instructieregels.nl",
+    live: "2026-07-17",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "rules",
@@ -549,6 +563,7 @@ const PRODUCTS = [
   {
     name: "DSO Implementatiemonitor",
     url: "https://dso-implementatiemonitor.nl",
+    live: "2026-07-14",           // eerste publieke deploy op het eigen domein
     status: "live",
     statusLabel: "Live",
     icon: "pulse",
@@ -559,6 +574,7 @@ const PRODUCTS = [
   {
     name: "MER-register",
     url: "https://mer-register.nl",
+    live: "2026-07-21",           // eerste publieke deploy op het eigen domein
     status: "live",               // 'live' | 'dev' | 'soon'
     statusLabel: "Live",
     icon: "mer",
@@ -841,6 +857,16 @@ function softHyphenate(s) {
     .replace(/([Ii]mplementatie)(?=[a-z])/g, '$1\u00AD');
 }
 
+/* "2026-05-26" -> "Live sinds 26 mei 2026" (geen Date-parsing: vaste ISO-string) */
+const MAANDEN = ["januari","februari","maart","april","mei","juni",
+                 "juli","augustus","september","oktober","november","december"];
+function liveHTML(p) {
+  if (p.status !== "live" || !p.live) return "";
+  const [y, m, d] = p.live.split("-");
+  const label = "Live sinds " + Number(d) + " " + MAANDEN[Number(m) - 1] + " " + y;
+  return `<p class="card__live"><time datetime="${p.live}">${label}</time></p>`;
+}
+
 function cardHTML(p, i) {
   const index = String(i + 1).padStart(2, "0");
   const tags = p.tags.map(t => `<span class="tag">${t}</span>`).join("");
@@ -866,6 +892,7 @@ function cardHTML(p, i) {
       <div class="card__body">
         <h3>${title}</h3>
         <p class="card__pitch">${p.pitch}</p>
+        ${liveHTML(p)}
         <div class="card__foot">
           <div class="tags">${tags}</div>
           ${arrow}
@@ -874,7 +901,13 @@ function cardHTML(p, i) {
     </article>`;
 }
 
-document.getElementById("grid").innerHTML = PRODUCTS.map(cardHTML).join("");
+/* Kaartvolgorde = chronologie van livegang, oudste linksboven. Tools zonder
+   'live'-datum (nog niet live) sluiten achteraan aan; bij een gelijke datum
+   blijft de volgorde uit PRODUCTS staan (Array.sort is stabiel). */
+const ORDERED = PRODUCTS.slice().sort((a, b) =>
+  (a.live || "9999-99-99").localeCompare(b.live || "9999-99-99"));
+
+document.getElementById("grid").innerHTML = ORDERED.map(cardHTML).join("");
 const liveCount = PRODUCTS.filter(p => p.status === "live").length;
 document.getElementById("toolcount").textContent =
   PRODUCTS.length + " tools · " + liveCount + " live";
