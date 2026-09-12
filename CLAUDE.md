@@ -31,3 +31,8 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
 - `tools/` staat in `.assetsignore`: bouwgereedschap hoort niet op de site.
 - Punten = aantal letters per woord; DOEL is het maximum van dat raster, dus
   het percentage is vergelijkbaar tussen rasters.
+- Het veld telt altijd 20 deelnemers: de speler plus 19 tegenstanders. Die
+  tegenstanders kiezen echte woorden uit het opgeloste raster en vinden die op
+  geplande tijdstippen, elk volgens een profiel (spurter, denker, gestaag,
+  golver, laatkomer). Daardoor blijft de ranglijst tijdens de ronde schuiven.
+  Zodra er een database is, schuiven echte spelers hier in de plaats van bots.

@@ -640,12 +640,26 @@ body::before {
     color: #5c3c03;
 }
 
+.eindstand-vak {
+    max-height: 320px;
+    margin-bottom: 14px;
+    overflow-y: auto;
+    border-radius: 10px;
+    scrollbar-width: thin;
+}
+
 .eindstand {
     width: 100%;
-    margin-bottom: 14px;
     border-collapse: collapse;
     font-size: .88rem;
     color: #4a3100;
+}
+
+.eindstand thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: linear-gradient(var(--paneel-1), #f7bb33);
 }
 
 .eindstand th {
@@ -682,6 +696,15 @@ body::before {
 
 .eindstand tr.ik td:last-child {
     border-radius: 0 8px 8px 0;
+}
+
+.beste-woord {
+    display: block;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    opacity: .62;
 }
 
 .gemist {

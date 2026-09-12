@@ -16,7 +16,7 @@
     var VAKKEN = ZIJDE * ZIJDE;
     var RONDE_SECONDEN = 90;
     var MIN_LENGTE = 3;
-    var AANTAL_BOTS = 5;
+    var VELDGROOTTE = 20;   /* het speelveld telt altijd 20 deelnemers */
     var PAUZE_SECONDEN = 10;   /* scorebord tussen twee rondes */
 
     /* Letterpot van 96 stenen, gewogen naar de Nederlandse letterfrequentie.
@@ -49,7 +49,24 @@
     var BOTNAMEN = [
         'Sanne', 'Joost', 'Fatima', 'Bram', 'Nienke', 'Youssef', 'Maarten', 'Lotte',
         'Ruben', 'Anouk', 'Pieter', 'Eva', 'Daan', 'Merel', 'Tijn', 'Hugo', 'Sam',
-        'Noor', 'Jasper', 'Isa', 'Willem', 'Fenna', 'Bas', 'Julia', 'Sven', 'Roos'
+        'Noor', 'Jasper', 'Isa', 'Willem', 'Fenna', 'Bas', 'Julia', 'Sven', 'Roos',
+        'Mees', 'Lieke', 'Thijs', 'Sara', 'Gijs', 'Femke', 'Stijn', 'Amber', 'Niels',
+        'Iris', 'Koen', 'Sofie', 'Wouter', 'Hanna', 'Teun', 'Emma', 'Jelle', 'Lars',
+        'Maud', 'Rick', 'Tess', 'Nora', 'Ties', 'Loes', 'Chiel', 'Marit', 'Jorden',
+        'Esmee', 'Kees', 'Silke', 'Arjen', 'Britt', 'Ravi', 'Yara', 'Milan', 'Floris',
+        'Nadia', 'Olivier', 'Hind', 'Jeroen', 'Saar', 'Bilal', 'Elin', 'Pim', 'Wies'
+    ];
+
+    /* Hoe een tegenstander zijn woorden over de 90 seconden verdeelt. De functie
+       zet een gelijkmatig getrokken getal om in een tijdstip: een lage uitkomst
+       is vroeg in de ronde, een hoge laat. Dat levert de sprongen op waardoor de
+       ranglijst tijdens het spelen blijft schuiven in plaats van stil te staan. */
+    var PROFIELEN = [
+        { naam: 'spurter', kromme: function (u) { return Math.pow(u, 1.9); } },
+        { naam: 'denker', kromme: function (u) { return Math.pow(u, 0.55); } },
+        { naam: 'gestaag', kromme: function (u) { return u; } },
+        { naam: 'golver', kromme: function (u) { return u < 0.5 ? 0.04 + u * 0.52 : 0.56 + (u - 0.5) * 0.86; } },
+        { naam: 'laatkomer', kromme: function (u) { return 0.24 + u * 0.76; } }
     ];
 
     /* Buurvakken (inclusief diagonaal), eenmalig uitgerekend. */
@@ -368,28 +385,38 @@
         var instelling = NIVEAUS[niveau];
         var namen = BOTNAMEN.slice();
         var beschikbaar = oplossing.woorden.length;
-        var gemiddeldeLengte = beschikbaar > 0 ? oplossing.maximum / beschikbaar : 4;
         var bots = [];
 
-        for (var i = 0; i < AANTAL_BOTS; i++) {
-            var keuze = Math.floor(Math.random() * namen.length);
-            var naam = namen.splice(keuze, 1)[0];
+        for (var i = 0; i < VELDGROOTTE - 1; i++) {
+            var naam = namen.splice(Math.floor(Math.random() * namen.length), 1)[0];
             var vaardigheid = instelling.laag + Math.random() * (instelling.hoog - instelling.laag);
 
-            var woorden = Math.round(vaardigheid * Math.sqrt(beschikbaar));
-            woorden = Math.max(1, Math.min(woorden, Math.floor(beschikbaar * 0.85) || 1));
-            /* Tegenstanders pakken eerder korte woorden dan lange, vandaar de
-               lichte korting op de gemiddelde woordlengte. */
-            var punten = Math.max(MIN_LENGTE, Math.round(woorden * gemiddeldeLengte * 0.92));
+            var hoeveel = Math.round(vaardigheid * Math.sqrt(beschikbaar));
+            hoeveel = Math.max(1, Math.min(hoeveel, Math.floor(beschikbaar * 0.85) || 1));
+
+            /* Zwakkere spelers blijven aan de korte woorden hangen, sterkere zien
+               de lange ook. Vandaar dat de voorkeur meeschaalt met de vaardigheid. */
+            var spreiding = (vaardigheid - instelling.laag) / Math.max(0.001, instelling.hoog - instelling.laag);
+            var voorkeur = 1.4 - spreiding * 0.8;
+
+            var profiel = PROFIELEN[Math.floor(Math.random() * PROFIELEN.length)];
+            var vondsten = planVondsten(oplossing.woorden, hoeveel, voorkeur, profiel);
+
+            var punten = 0, beste = '';
+            for (var v = 0; v < vondsten.length; v++) {
+                punten += vondsten[v].woord.length;
+                if (vondsten[v].woord.length > beste.length) beste = vondsten[v].woord;
+            }
 
             bots.push({
                 naam: naam,
                 isIk: false,
+                profiel: profiel.naam,
+                vondsten: vondsten,
+                wijzer: 0,
                 eindpunten: punten,
-                eindwoorden: woorden,
-                /* Elke bot heeft een eigen tempo: sommigen komen traag op gang,
-                   anderen beginnen sterk en vlakken af. */
-                tempo: 0.7 + Math.random() * 0.75,
+                eindwoorden: vondsten.length,
+                besteWoord: beste,
                 punten: 0,
                 woorden: 0
             });
@@ -397,12 +424,70 @@
         return bots;
     }
 
-    function werkBotsBij(bots, voortgang) {
+    /* Kiest de woorden die één tegenstander gaat vinden en zet er tijdstippen
+       bij. Korte woorden worden vaker gekozen dan lange, en lange woorden vallen
+       gemiddeld later in de ronde: die zie je nu eenmaal niet meteen liggen. */
+    function planVondsten(alleWoorden, hoeveel, voorkeur, profiel) {
+        var vijver = alleWoorden.slice();
+        var gewichten = new Array(vijver.length);
+        var totaal = 0;
+        for (var i = 0; i < vijver.length; i++) {
+            gewichten[i] = 1 / Math.pow(vijver[i].length - 2, voorkeur);
+            totaal += gewichten[i];
+        }
+
+        var gekozen = [];
+        for (var k = 0; k < hoeveel && vijver.length > 0; k++) {
+            var trek = Math.random() * totaal, index = 0;
+            while (index < vijver.length - 1 && trek > gewichten[index]) {
+                trek -= gewichten[index];
+                index++;
+            }
+            gekozen.push(vijver[index]);
+            totaal -= gewichten[index];
+            vijver.splice(index, 1);
+            gewichten.splice(index, 1);
+        }
+
+        var tijden = [];
+        for (var t = 0; t < gekozen.length; t++) {
+            tijden.push(profiel.kromme(Math.random()) * RONDE_SECONDEN);
+        }
+        tijden.sort(function (a, b) { return a - b; });
+        gekozen.sort(function (a, b) { return a.length - b.length; });
+
+        /* Zonder deze schudbeurt vindt elke bot zijn woorden keurig van kort naar
+           lang; dat is te netjes om op een echte speler te lijken. */
+        for (var w = 0; w < gekozen.length - 1; w++) {
+            if (Math.random() < 0.35) {
+                var tussen = gekozen[w]; gekozen[w] = gekozen[w + 1]; gekozen[w + 1] = tussen;
+            }
+        }
+
+        var vondsten = [];
+        for (var n = 0; n < gekozen.length; n++) {
+            vondsten.push({ woord: gekozen[n], tijd: tijden[n] });
+        }
+        return vondsten;
+    }
+
+    /* Zet elke bot op de stand die hoort bij het aantal verstreken seconden. De
+       wijzer loopt alleen vooruit, dus dit kost een paar vergelijkingen per
+       aanroep, ook bij twintig deelnemers en tien keer per seconde. */
+    function werkBotsBij(bots, verstreken) {
         for (var i = 0; i < bots.length; i++) {
             var bot = bots[i];
-            var deel = Math.pow(Math.min(1, Math.max(0, voortgang)), bot.tempo);
-            bot.punten = Math.round(bot.eindpunten * deel);
-            bot.woorden = Math.round(bot.eindwoorden * deel);
+            if (verstreken <= 0) {
+                bot.wijzer = 0;
+                bot.punten = 0;
+                bot.woorden = 0;
+                continue;
+            }
+            while (bot.wijzer < bot.vondsten.length && bot.vondsten[bot.wijzer].tijd <= verstreken) {
+                bot.punten += bot.vondsten[bot.wijzer].woord.length;
+                bot.woorden++;
+                bot.wijzer++;
+            }
         }
     }
 
@@ -437,6 +522,7 @@
         rangstrip: $('rangstrip'),
         stopKnop: $('stop-knop'),
         eindstand: $('eindstand'),
+        eindstandVak: $('eindstand-vak'),
         uitslagSamenvatting: $('uitslag-samenvatting'),
         gemist: $('gemist'),
         gemistTelling: $('gemist-telling'),
@@ -638,10 +724,16 @@
         var staart;
         if (plek === 1) {
             var tweede = deelnemers[1];
-            staart = 'voorsprong ' + (spel.punten - tweede.punten) + ' op ' + ontsnap(tweede.naam);
+            var voor = spel.punten - tweede.punten;
+            staart = voor === 0
+                ? 'nek aan nek met ' + ontsnap(tweede.naam)
+                : 'voorsprong ' + voor + ' op ' + ontsnap(tweede.naam);
         } else {
             var boven = deelnemers[plek - 2];
-            staart = ontsnap(boven.naam) + ' staat ' + (boven.punten - spel.punten) + ' voor';
+            var achter = boven.punten - spel.punten;
+            staart = achter === 0
+                ? 'gelijk met ' + ontsnap(boven.naam)
+                : ontsnap(boven.naam) + ' staat ' + achter + ' voor';
         }
         el.rangstrip.innerHTML = '<b>' + plek + 'e</b> van ' + deelnemers.length + ' &middot; ' + staart;
     }
@@ -822,7 +914,7 @@
             Geluid.tik();
         }
 
-        werkBotsBij(spel.bots, verstreken / RONDE_SECONDEN);
+        werkBotsBij(spel.bots, verstreken);
         werkLiveRanglijstBij();
 
         if (over <= 0) beeindig();
@@ -834,21 +926,41 @@
         window.clearInterval(klok);
         klok = null;
         wisSelectie();
-        werkBotsBij(spel.bots, 1);
+        werkBotsBij(spel.bots, RONDE_SECONDEN);
         Geluid.einde();
         toonUitslag();
         toonScherm('uitslag');
+        scrollNaarMijnRij();
+    }
+
+    /* Bij twintig deelnemers staat je eigen regel zelden vanzelf in beeld.
+       Dit kan pas als het uitslagscherm getoond is: zolang het verborgen is,
+       heeft de scrollbak geen hoogte en blijft scrollTop op nul staan. */
+    function scrollNaarMijnRij() {
+        var mijnRij = document.getElementById('mijn-rij');
+        if (!mijnRij) return;
+        el.eindstandVak.scrollTop = Math.max(0,
+            mijnRij.offsetTop - el.eindstandVak.clientHeight / 2 + mijnRij.offsetHeight / 2);
     }
 
     function toonUitslag() {
         var maximum = spel.oplossing.maximum;
         var percentage = maximum > 0 ? (spel.punten / maximum) * 100 : 0;
 
+        var mijnBeste = '';
+        for (var m = 0; m < spel.volgorde.length; m++) {
+            if (spel.volgorde[m].length > mijnBeste.length) mijnBeste = spel.volgorde[m];
+        }
+
         var deelnemers = spel.bots.map(function (bot) {
-            return { naam: bot.naam, punten: bot.punten, woorden: bot.woorden, isIk: false };
+            return {
+                naam: bot.naam, punten: bot.punten, woorden: bot.woorden,
+                beste: bot.besteWoord, isIk: false
+            };
         });
         deelnemers.push({
-            naam: spel.naam, punten: spel.punten, woorden: spel.volgorde.length, isIk: true
+            naam: spel.naam, punten: spel.punten, woorden: spel.volgorde.length,
+            beste: mijnBeste, isIk: true
         });
         deelnemers.sort(function (a, b) { return b.punten - a.punten || b.woorden - a.woorden; });
 
@@ -857,13 +969,17 @@
         for (var i = 0; i < deelnemers.length; i++) {
             var d = deelnemers[i];
             if (d.isIk) plek = i + 1;
-            html += '<tr' + (d.isIk ? ' class="ik"' : '') + '>' +
+            html += '<tr' + (d.isIk ? ' class="ik" id="mijn-rij"' : '') + '>' +
                 '<td>' + (i + 1) + '</td>' +
-                '<td>' + ontsnap(d.naam) + '</td>' +
+                '<td>' + ontsnap(d.naam) +
+                (d.beste ? '<span class="beste-woord">' + ontsnap(d.beste) + '</span>' : '') +
+                '</td>' +
                 '<td>' + d.woorden + '</td>' +
                 '<td>' + d.punten + '</td></tr>';
         }
         el.eindstand.innerHTML = html;
+
+
 
         el.uitslagSamenvatting.innerHTML =
             'Plaats <strong>' + plek + '</strong> van ' + deelnemers.length + '. Je vond <strong>' +
