@@ -1,17 +1,13 @@
-# Cloudflare Pages geeft js en css standaard vier uur cache mee. Daardoor
-# bleven bezoekers na een deploy uren op de oude code hangen, terwijl de HTML
-# wel meteen ververste. Dat leverde een half bijgewerkte pagina op: nieuwe
-# opmaak met oude javascript, of andersom.
+# Cloudflare Pages geeft js, css en afbeeldingen standaard vier uur cache mee,
+# terwijl de HTML wel meteen ververst. Een bezoeker kreeg daardoor na een
+# deploy nieuwe HTML met oude javascript: fouten die op je eigen machine niet
+# te reproduceren zijn, omdat jij die cache niet hebt.
 #
-# Alles hieronder moet dus per bezoek even navragen. Dat kost een klein
-# rondje naar de server, geen nieuwe download: bij een ongewijzigd bestand
-# komt er een 304 terug van een paar honderd bytes.
+# no-cache betekent niet "niet bewaren" maar "eerst navragen". Een ongewijzigd
+# bestand levert dus een 304 van een paar honderd bytes op, geen download.
 #
-# De woordenlijst is de uitzondering. Die is een megabyte groot en verandert
-# alleen als hij opnieuw gebouwd wordt, dus die mag wel blijven staan.
-
-/woordjacht/woorden.txt
-  Cache-Control: public, max-age=604800, must-revalidate
+# Bewust een enkele regel: bij twee overlappende regels plakt Pages de waarden
+# achter elkaar, en dat levert een Cache-Control op waar niemand iets aan heeft.
 
 /*
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: no-cache
