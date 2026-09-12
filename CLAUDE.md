@@ -69,6 +69,13 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
   staan (licentievoorwaarde) en dus mee gedeployd worden.
 - Punten = aantal letters per woord; DOEL is het maximum van dat raster, dus
   het percentage is vergelijkbaar tussen rasters.
+- De tegenstanders hebben **bijnamen**, geen voornamen: een ranglijst vol
+  Sanne en Joost leest als een klassenlijst. Houd nieuwe namen onder de
+  zestien tekens, anders loopt de ranglijststrip op een smalle telefoon vol.
+  `DUOS` zijn namen die samen op het bord horen (`Folkert<3 Sanne` en
+  `Sanne<3 Folkert`); `kiesNamen` haalt de partner erbij zodra er een getrokken
+  wordt. Namen gaan overal door `ontsnap()`, dus een `<` in een naam is veilig
+  — maar controleer dat bij nieuwe weergavepaden opnieuw.
 - **De sterkte van de tegenstanders is geijkt op een veld van negentien.** Je
   speelt niet tegen de mediaan maar tegen de *beste van negentien trekkingen*,
   en die ligt fors hoger. Toen het veld van 5 naar 19 ging werd het spel

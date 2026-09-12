@@ -53,16 +53,70 @@
         meester: { naam: 'Meester', laag: 2.40, hoog: 4.20 }
     };
 
+    /* Bijnamen in plaats van voornamen: een ranglijst vol Sanne en Joost leest
+       als een klassenlijst, terwijl dit een spelletje is. Houd ze kort -- bij
+       meer dan zestien tekens loopt de ranglijststrip op een smalle telefoon
+       vol -- en denk eraan dat ze door ontsnap() gaan, dus een '<' mag. */
     var BOTNAMEN = [
-        'Sanne', 'Joost', 'Fatima', 'Bram', 'Nienke', 'Youssef', 'Maarten', 'Lotte',
-        'Ruben', 'Anouk', 'Pieter', 'Eva', 'Daan', 'Merel', 'Tijn', 'Hugo', 'Sam',
-        'Noor', 'Jasper', 'Isa', 'Willem', 'Fenna', 'Bas', 'Julia', 'Sven', 'Roos',
-        'Mees', 'Lieke', 'Thijs', 'Sara', 'Gijs', 'Femke', 'Stijn', 'Amber', 'Niels',
-        'Iris', 'Koen', 'Sofie', 'Wouter', 'Hanna', 'Teun', 'Emma', 'Jelle', 'Lars',
-        'Maud', 'Rick', 'Tess', 'Nora', 'Ties', 'Loes', 'Chiel', 'Marit', 'Jorden',
-        'Esmee', 'Kees', 'Silke', 'Arjen', 'Britt', 'Ravi', 'Yara', 'Milan', 'Floris',
-        'Nadia', 'Olivier', 'Hind', 'Jeroen', 'Saar', 'Bilal', 'Elin', 'Pim', 'Wies'
+        'Meeuw', 'Doctorandus P', 'Bertha 39', 'Grutto', 'Kievit', 'Koolmees',
+        'Roodborst', 'Wilde Eend', 'Tante Riet', 'Ome Jan', 'Opa Henk', 'Beppie',
+        'Tante Sjaan', 'Turbo Truus', 'Snelle Jelle', 'Scrabble Sjaak',
+        'Anagram Ans', 'Puzzelpiet', 'Woordbaas68', 'Letterzee44', 'Woordaap92',
+        'Gerda 61', 'Henk 1953', 'Truus 74', 'Sjaak 88', 'xX_Beppie_Xx',
+        'Woordzoeker2000', 'TaalTijger', 'De Letterdief', 'Klinkerkoning',
+        'Puntenpakker', 'Rasterrat', 'Woordwolf', 'Letterkoek', 'Stroopwafel',
+        'Hagelslag', 'Pindakaas', 'Krentenbol', 'Poffertje', 'Kroket', 'Tosti',
+        'Havermout', 'Drop', 'Kaaskop', 'De Kaasschaaf', 'Bakfiets', 'Fietsbel',
+        'Rollator', 'Regenjas', 'Bloempot', 'Molensteen', 'Klaas Vaak',
+        'Jan Modaal', 'Jan met de Pet', 'Gebakken Lucht', 'Losse Flodder',
+        'Halve Zool', 'Rare Snuiter', 'Klein Duimpje', 'Nachtbraker', 'Dubbelop',
+        'Vinkje', 'Zeeuws Meisje', 'Dikke Duim', 'Mevr. Jansen', 'Buurman',
+        'De Typemachine', 'Woordenboek', 'Sloddervos', 'Kladblok', 'Kruiswoord',
+        'Teletekst',
+        /* De koppels hieronder: zie DUOS. */
+        'Folkert<3 Sanne', 'Sanne<3 Folkert', 'Sjonnie', 'Anita',
+        'Hans', 'Grietje', 'Jut', 'Jul'
     ];
+
+    /* Deze namen horen bij elkaar en komen samen op het bord, of geen van
+       beide. Los van elkaar is er niets aan; naast elkaar in de ranglijst
+       wel. */
+    var DUOS = [
+        ['Folkert<3 Sanne', 'Sanne<3 Folkert'],
+        ['Sjonnie', 'Anita'],
+        ['Hans', 'Grietje'],
+        ['Jut', 'Jul']
+    ];
+
+    function partnerVan(naam) {
+        for (var i = 0; i < DUOS.length; i++) {
+            if (DUOS[i][0] === naam) return DUOS[i][1];
+            if (DUOS[i][1] === naam) return DUOS[i][0];
+        }
+        return null;
+    }
+
+    /* Trekt namen voor een veld. Loopt volledig via de meegegeven generator,
+       zodat een gedeelde ronde bij iedereen dezelfde namen oplevert. */
+    function kiesNamen(willekeur, hoeveel) {
+        var pot = BOTNAMEN.slice();
+        var gekozen = [];
+
+        while (gekozen.length < hoeveel && pot.length > 0) {
+            var naam = pot.splice(Math.floor(willekeur() * pot.length), 1)[0];
+            gekozen.push(naam);
+
+            var partner = partnerVan(naam);
+            if (partner && gekozen.length < hoeveel) {
+                var plek = pot.indexOf(partner);
+                if (plek !== -1) {
+                    pot.splice(plek, 1);
+                    gekozen.push(partner);
+                }
+            }
+        }
+        return gekozen;
+    }
 
     /* Hoe een tegenstander zijn woorden over de 90 seconden verdeelt. De functie
        zet een gelijkmatig getrokken getal om in een tijdstip: een lage uitkomst
@@ -447,12 +501,12 @@
     function maakBots(niveau, oplossing, willekeur) {
         willekeur = willekeur || losseWillekeur;
         var instelling = NIVEAUS[niveau];
-        var namen = BOTNAMEN.slice();
         var beschikbaar = oplossing.woorden.length;
+        var namen = kiesNamen(willekeur, VELDGROOTTE - 1);
         var bots = [];
 
         for (var i = 0; i < VELDGROOTTE - 1; i++) {
-            var naam = namen.splice(Math.floor(willekeur() * namen.length), 1)[0];
+            var naam = namen[i];
             var vaardigheid = instelling.laag + willekeur() * (instelling.hoog - instelling.laag);
 
             var hoeveel = Math.round(vaardigheid * Math.sqrt(beschikbaar));
