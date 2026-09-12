@@ -537,9 +537,9 @@
      * elke browser daar zelf uit af, en komt zo op hetzelfde uit.        *
      * ---------------------------------------------------------------- */
 
-    /* Leeg zolang de dienst nog niet draait; dan blijft samen spelen uit en
+    /* Leeg laten zolang de dienst niet draait; dan blijft samen spelen uit en
        verandert er niets aan het spel zelf. */
-    var API_BASIS = '';
+    var API_BASIS = 'https://api.elconteo.nl';
 
     /* Tijdens lokaal ontwikkelen mag ?api= dit overschrijven. Alleen op
        localhost, zodat niemand de live site naar een vreemde server kan
@@ -551,6 +551,7 @@
     })();
 
     var POLL_MS = 2000;
+    var VERZOEK_TIJDSLIMIET = 8000;
 
     var Samen = {
         aan: false,
@@ -566,13 +567,34 @@
         beschikbaar: function () { return Boolean(API_BASIS); },
 
         vraag: function (pad, gegevens) {
+            /* Zonder dit slot zou een lege API_BASIS van '/samen/meedoen' een
+               verzoek aan onze eigen site maken. Cloudflare Pages weigert
+               POSTs met een 405, en dat is een raadselachtige fout voor iets
+               wat simpelweg niet ingesteld is. */
+            if (!API_BASIS) {
+                return Promise.reject(new Error('samen spelen staat uit'));
+            }
+
+            /* Zonder tijdslimiet blijft een onbereikbare dienst hangen en
+               krijgt de speler nooit te horen dat er iets mis is. */
+            var afbreker = typeof AbortController === 'function' ? new AbortController() : null;
+            var wekker = window.setTimeout(function () {
+                if (afbreker) afbreker.abort();
+            }, VERZOEK_TIJDSLIMIET);
+
             return fetch(API_BASIS + pad, {
                 method: gegevens ? 'POST' : 'GET',
                 headers: gegevens ? { 'Content-Type': 'application/json' } : undefined,
-                body: gegevens ? JSON.stringify(gegevens) : undefined
+                body: gegevens ? JSON.stringify(gegevens) : undefined,
+                signal: afbreker ? afbreker.signal : undefined
             }).then(function (antwoord) {
+                window.clearTimeout(wekker);
                 if (!antwoord.ok) throw new Error('HTTP ' + antwoord.status);
                 return antwoord.json();
+            }, function (fout) {
+                window.clearTimeout(wekker);
+                throw new Error(fout && fout.name === 'AbortError'
+                    ? 'dienst reageert niet' : 'geen verbinding');
             });
         },
 

@@ -30,6 +30,14 @@
     padding: 0;
 }
 
+/* De browser verbergt [hidden] met display:none, maar dat komt uit de
+   useragent-stijl en verliest dus van elke auteursregel met een eigen
+   display. `.knop { display: block }` maakte een verborgen knop daardoor
+   gewoon zichtbaar. Deze regel zet dat recht, voor alle elementen. */
+[hidden] {
+    display: none !important;
+}
+
 html {
     -webkit-text-size-adjust: 100%;
 }

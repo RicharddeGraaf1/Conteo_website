@@ -59,5 +59,11 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
   tegenstanders uit af. Alle willekeur loopt daarom via `zaadbareWillekeur`,
   niet via `Math.random` — nieuwe willekeur in het spel moet dat pad volgen,
   anders lopen browsers in een gedeelde ronde uit elkaar.
-- `API_BASIS` boven in `woordjacht.js` is leeg tot de dienst draait; zolang
-  die leeg is blijft de knop 'Samen spelen' verborgen en verandert er niets.
+- `API_BASIS` boven in `woordjacht.js` wijst naar `https://api.elconteo.nl`
+  (Railway). Leeg maken schakelt samen spelen uit; de knop verdwijnt dan en
+  `Samen.vraag` weigert, zodat er nooit een verzoek naar de eigen site gaat.
+- **Let op bij `hidden`:** de browser verbergt `[hidden]` via de
+  useragent-stijl, en die verliest van elke auteursregel met een eigen
+  `display`. `.knop { display: block }` maakte een verborgen knop daardoor
+  gewoon zichtbaar. De stylesheet bevat nu `[hidden] { display: none
+  !important }` — haal die regel niet weg.
