@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Bouwt woordjacht/woorden.txt uit de OpenTaal-woordenlijst.
+"""Bouwt public/woordjacht/woorden.txt uit de OpenTaal-woordenlijst.
 
 Bron : https://github.com/OpenTaal/opentaal-wordlist  (BSD-3 / CC BY 3.0)
 Versie in gebruik: 2.20.23 (2023-03-10). De licentie staat naast de
-woordenlijst in woordjacht/woorden-LICENSE.txt; OpenTaal vraagt die
+woordenlijst in public/woordjacht/woorden-LICENSE.txt; OpenTaal vraagt die
 kopie bij elke kopie van de lijst te bewaren.
 Uitvoer: front-gecodeerde, alfabetisch gesorteerde lijst. Elke regel is
 één teken met de lengte van het gedeelde voorvoegsel met de vorige regel
@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 
 BRON = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/master/wordlist.txt"
-UITVOER = Path(__file__).resolve().parent.parent / "woordjacht" / "woorden.txt"
+UITVOER = Path(__file__).resolve().parent.parent / "public" / "woordjacht" / "woorden.txt"
 
 # Een 4x4-raster kan hooguit 16 letters aaneenrijgen, maar woorden van meer
 # dan 12 letters zijn in de praktijk onvindbaar en kosten alleen bandbreedte.

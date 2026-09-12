@@ -19,4 +19,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: 03d57417cb436aedb960d69079147d65
-          command: pages deploy . --project-name=elconteo --branch=main --commit-dirty=true
+          command: pages deploy public --project-name=elconteo --branch=main --commit-dirty=true
