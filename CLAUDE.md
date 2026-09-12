@@ -37,6 +37,21 @@ De `CLOUDFLARE_API_TOKEN` staat in **GitHub Secrets**, NIET in de repo.
   env-inhoud tonen (Pages geeft overal HTTP 200 — check de body, niet de
   status). Datzelfde geldt voor `/CLAUDE.md` en `/api/server.js`.
 
+### Cache
+
+Cloudflare Pages geeft js en css standaard **vier uur** cache mee, terwijl de
+HTML wel meteen ververst. Een bezoeker kreeg daardoor na een deploy nieuwe
+HTML met oude javascript — wat zich uitte als onverklaarbare fouten die op
+jouw machine niet te reproduceren waren.
+
+`public/_headers` zet dat recht: alles revalideert per bezoek (een 304 van een
+paar honderd bytes), behalve `woorden.txt`, die een megabyte groot is en
+alleen verandert als hij opnieuw gebouwd wordt.
+
+De `?v=` achter de verwijzingen in de HTML was eenmalig nodig om al gecachte
+browsers los te wrikken. Met `_headers` op zijn plek hoeft dat getal niet meer
+bij elke wijziging omhoog.
+
 ## Woordjacht (`public/woordjacht/`)
 
 Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
