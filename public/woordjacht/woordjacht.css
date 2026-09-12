@@ -676,7 +676,12 @@ body::before {
     scrollbar-width: thin;
 }
 
+/* Vaste kolombreedtes, zodat een lange bijnaam als 'Woordzoeker2000' of
+   'Folkert<3 Sanne' afbreekt in plaats van de tabel breder te maken dan het
+   scherm. Zonder dit liep de eindstand op een telefoon van 360 px twintig
+   pixels over de rand. */
 .eindstand {
+    table-layout: fixed;
     width: 100%;
     border-collapse: collapse;
     font-size: .88rem;
@@ -704,6 +709,25 @@ body::before {
 .eindstand td:nth-child(n+3) {
     text-align: right;
     font-variant-numeric: tabular-nums;
+}
+
+.eindstand th:first-child,
+.eindstand td:first-child {
+    width: 2.1rem;
+}
+
+.eindstand th:nth-child(3),
+.eindstand td:nth-child(3) {
+    width: 2.8rem;
+}
+
+.eindstand th:last-child,
+.eindstand td:last-child {
+    width: 3.9rem;
+}
+
+.eindstand td:nth-child(2) {
+    overflow-wrap: anywhere;
 }
 
 .eindstand td {

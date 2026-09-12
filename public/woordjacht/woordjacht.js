@@ -715,19 +715,36 @@
 
         klop: function () {
             var zelf = this;
-            this.vraag('/samen/stand', {
-                rondeId: this.rondeId,
-                spelerId: this.spelerId,
+            var oudeRonde = this.rondeId;
+            var oudeSpeler = this.spelerId;
+
+            return this.vraag('/samen/stand', {
+                rondeId: oudeRonde,
+                spelerId: oudeSpeler,
                 punten: spel ? spel.punten : 0,
                 woorden: spel ? spel.volgorde.length : 0
             }).then(function (beeld) {
                 if (!beeld.ronde) { zelf.verlaat(); return; }
 
-                var nieuweRonde = beeld.ronde.id !== zelf.rondeId;
+                var nieuweRonde = beeld.ronde.id !== oudeRonde;
                 var kwijt = !beeld.jij;
                 zelf.neemOver(beeld);
 
-                if (!nieuweRonde && !kwijt) return;
+                if (!nieuweRonde && !kwijt) {
+                    /* Sta je op het scorebord, dan komen de eindstanden van de
+                       anderen hier binnen. Opnieuw tekenen dus: pas daardoor
+                       zien alle spelers dezelfde uitslag. */
+                    if (spel && spel.samen && !el.uitslagscherm.hidden) tekenEindstand();
+                    return;
+                }
+
+                /* Binnen dezelfde ronde eerst netjes afmelden, anders blijft de
+                   oude inschrijving staan tot de server hem vergeet en zien de
+                   anderen ons ondertussen dubbel. */
+                if (!nieuweRonde && oudeSpeler) {
+                    zelf.vraag('/samen/vertrek', { rondeId: oudeRonde, spelerId: oudeSpeler })
+                        .catch(function () { });
+                }
 
                 /* Doorgerolde ronde, of de server is ons kwijt (bijvoorbeeld na
                    een haperende verbinding). In beide gevallen opnieuw
@@ -740,6 +757,28 @@
                     })
                     .catch(function () { });
             }).catch(function () { /* een gemiste klop is niet erg; de volgende komt zo */ });
+        },
+
+        /* Een afgeknepen achtergrondtabblad pollt bijna niet meer. Zodra de
+           speler terug is dus niet wachten op de volgende beurt, maar meteen
+           van je laten horen -- anders is hij net vergeten. */
+        bijTerugkeer: function () {
+            if (!this.aan || document.hidden) return;
+            this.klop();
+        },
+
+        /* Wie het tabblad sluit kan geen gewoon verzoek meer afmaken; een
+           beacon overleeft dat wel. Zonder dit blijft hij tot de vergeettijd
+           op het scorebord van de anderen staan. */
+        meldAf: function () {
+            if (!this.aan || !this.rondeId || !this.spelerId) return;
+            var pakket = JSON.stringify({ rondeId: this.rondeId, spelerId: this.spelerId });
+            if (navigator.sendBeacon) {
+                /* text/plain houdt het een eenvoudig verzoek, zodat er geen
+                   preflight nodig is die een beacon niet kan doen. */
+                navigator.sendBeacon(API_BASIS + '/samen/vertrek',
+                    new Blob([pakket], { type: 'text/plain' }));
+            }
         },
 
         verlaat: function () {
@@ -1012,6 +1051,7 @@
 
         var deelnemers = spel.bots.map(function (bot) {
             return {
+                sleutel: 'b:' + bot.naam,
                 naam: bot.naam, punten: bot.punten, woorden: bot.woorden,
                 beste: bot.besteWoord, isIk: false, isMens: false, laatIn: 0
             };
@@ -1020,6 +1060,7 @@
         if (spel.samen) {
             Samen.anderen().forEach(function (ander) {
                 deelnemers.push({
+                    sleutel: 's:' + ander.id,
                     naam: ander.naam, punten: ander.punten, woorden: ander.woorden,
                     beste: '', isIk: false, isMens: true,
                     laatIn: ander.meegedaanVanaf > 5 ? ander.meegedaanVanaf : 0
@@ -1028,12 +1069,21 @@
         }
 
         deelnemers.push({
+            sleutel: 's:' + (Samen.spelerId || 'ik'),
             naam: spel.naam, punten: spel.punten, woorden: spel.volgorde.length,
             beste: mijnBeste, isIk: true, isMens: true, laatIn: 0
         });
 
+        /* Deze volgorde moet bij elke speler identiek uitpakken, anders staat
+           dezelfde ronde bij twee mensen in een andere volgorde. Daarom geen
+           localeCompare (die hangt van de taalinstelling af) en geen isIk als
+           laatste criterium (die verschilt per speler per definitie), maar een
+           sleutel die overal hetzelfde is. */
         deelnemers.sort(function (a, b) {
-            return b.punten - a.punten || b.woorden - a.woorden || (a.isIk ? 1 : -1);
+            if (b.punten !== a.punten) return b.punten - a.punten;
+            if (b.woorden !== a.woorden) return b.woorden - a.woorden;
+            if (a.naam !== b.naam) return a.naam < b.naam ? -1 : 1;
+            return a.sleutel < b.sleutel ? -1 : a.sleutel > b.sleutel ? 1 : 0;
         });
         return deelnemers;
     }
@@ -1260,6 +1310,10 @@
         toonUitslag();
         toonScherm('uitslag');
         scrollNaarMijnRij();
+
+        /* Niet wachten op de volgende klop: de punten van de laatste seconden
+           moeten de anderen halen voordat zij hun scorebord tekenen. */
+        if (spel.samen && Samen.aan) Samen.klop();
     }
 
     /* Bij twintig deelnemers staat je eigen regel zelden vanzelf in beeld.
@@ -1272,7 +1326,10 @@
             mijnRij.offsetTop - el.eindstandVak.clientHeight / 2 + mijnRij.offsetHeight / 2);
     }
 
-    function toonUitslag() {
+    /* De eindstand wordt tijdens het scorebord opnieuw getekend zodra er
+       verse standen binnenkomen. Zonder dat bevriest ieders scherm op de
+       laatste polling voor de finish, en ziet iedereen andere eindcijfers. */
+    function tekenEindstand() {
         var maximum = spel.oplossing.maximum;
         var percentage = maximum > 0 ? (spel.punten / maximum) * 100 : 0;
 
@@ -1303,6 +1360,13 @@
             spel.volgorde.length + '</strong> van de ' + spel.oplossing.woorden.length +
             ' woorden en scoorde <strong>' + spel.punten + '</strong> van de ' + maximum +
             ' punten (' + percentage.toFixed(1).replace('.', ',') + ' %).';
+    }
+
+    function toonUitslag() {
+        var maximum = spel.oplossing.maximum;
+        var percentage = maximum > 0 ? (spel.punten / maximum) * 100 : 0;
+
+        tekenEindstand();
 
         /* Gemiste woorden: de langste eerst, want die zijn het interessantst. */
         var gemist = spel.oplossing.woorden.filter(function (woord) {
@@ -1409,7 +1473,10 @@
 
     document.addEventListener('visibilitychange', function () {
         if (aftelKlok) tekenAftellen();
+        Samen.bijTerugkeer();
     });
+
+    window.addEventListener('pagehide', function () { Samen.meldAf(); });
 
     Array.prototype.forEach.call(el.uitslagscherm.querySelectorAll('details'), function (blok) {
         blok.addEventListener('toggle', function () { if (aftelKlok) tekenAftellen(); });

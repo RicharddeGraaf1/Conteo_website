@@ -32,7 +32,11 @@ function uitOmgeving(naam, standaard) {
 
 const RONDE_MS = uitOmgeving('LOBBY_RONDE_MS', 90 * 1000);
 const PAUZE_MS = uitOmgeving('LOBBY_PAUZE_MS', 10 * 1000);   /* scorebord tussen twee rondes */
-const VERGETEN_MS = uitOmgeving('LOBBY_VERGETEN_MS', 12 * 1000);  /* niets gehoord = weg */
+/* Ruim genoeg om een telefoon die even op slot gaat te overleven: browsers
+   knijpen timers in een achtergrondtabblad af, en wie dan meteen vergeten
+   wordt verdwijnt van andermans scorebord terwijl hij gewoon meespeelt. Wie
+   echt weggaat meldt zich af, dus deze grens hoeft niet krap. */
+const VERGETEN_MS = uitOmgeving('LOBBY_VERGETEN_MS', 25 * 1000);
 const MAX_NAAM = 14;
 
 let ronde = null;

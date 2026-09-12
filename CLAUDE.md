@@ -97,6 +97,15 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
   Bij samen spelen komen echte medespelers er bovenop, dus dan zijn het er
   meer dan 20. Bots halverwege een ronde wegnemen zou scores van het bord
   laten verdwijnen; dat is erger dan een veld van 22.
+- **De eindstand moet bij alle spelers gelijk uitpakken.** Drie dingen bewaken
+  dat, en ze zijn alle drie een keer misgegaan: (1) het scorebord wordt tijdens
+  de scorebordfase opnieuw getekend als er verse standen binnenkomen, anders
+  bevriest ieders scherm op de laatste polling vóór de finish; (2) bij de
+  finish gaat de eigen eindstand meteen de deur uit in plaats van bij de
+  volgende polling; (3) de sortering gebruikt een sleutel die overal hetzelfde
+  is — geen `localeCompare` (taalafhankelijk) en geen `isIk` (verschilt per
+  speler per definitie). Voeg nooit een sorteercriterium toe dat van de kijker
+  afhangt.
 - **Samen spelen** loopt via `api/` (zie `api/README.md`). De server stuurt
   alleen een zaadje; elke browser leidt daar hetzelfde raster en dezelfde
   tegenstanders uit af. Alle willekeur loopt daarom via `zaadbareWillekeur`,
