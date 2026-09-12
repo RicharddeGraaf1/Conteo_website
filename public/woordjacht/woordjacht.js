@@ -69,6 +69,41 @@
         { naam: 'laatkomer', kromme: function (u) { return 0.24 + u * 0.76; } }
     ];
 
+    /* ---------------------------------------------------------------- *
+     * Willekeur                                                         *
+     *                                                                   *
+     * Solo speelt iedereen zijn eigen spel, daar volstaat Math.random.   *
+     * Samen spelen eist het tegenovergestelde: elke browser moet uit     *
+     * hetzelfde rondezaadje exact hetzelfde raster en dezelfde           *
+     * tegenstanders afleiden. Dan hoeft de server niets van dat alles    *
+     * te versturen — alleen het zaadje.                                  *
+     * ---------------------------------------------------------------- */
+
+    /* mulberry32: klein, snel en over browsers heen identiek. */
+    function zaadbareWillekeur(zaad) {
+        var toestand = zaad >>> 0;
+        return function () {
+            toestand = (toestand + 0x6D2B79F5) >>> 0;
+            var t = toestand;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    /* Zet een tekstzaadje (bijvoorbeeld een rondecode van de server) om in
+       een 32-bits getal. FNV-1a: kort en botsingsarm genoeg voor dit doel. */
+    function zaadUitTekst(tekst) {
+        var hash = 2166136261;
+        for (var i = 0; i < tekst.length; i++) {
+            hash ^= tekst.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+    }
+
+    var losseWillekeur = function () { return Math.random(); };
+
     /* Buurvakken (inclusief diagonaal), eenmalig uitgerekend. */
     var BUREN = (function () {
         var alle = [];
@@ -231,10 +266,10 @@
      * Raster trekken                                                    *
      * ---------------------------------------------------------------- */
 
-    function trekLetters() {
+    function trekLetters(willekeur) {
         var pot = LETTERPOT.slice();
         for (var i = pot.length - 1; i > 0; i--) {
-            var j = Math.floor(Math.random() * (i + 1));
+            var j = Math.floor(willekeur() * (i + 1));
             var tijdelijk = pot[i]; pot[i] = pot[j]; pot[j] = tijdelijk;
         }
         return pot.slice(0, VAKKEN);
@@ -250,11 +285,12 @@
     /* Trekt net zolang rasters tot er een speelbaar exemplaar tussen zit:
        genoeg klinkers, genoeg te halen punten en minstens één langer woord.
        Lukt dat niet, dan wint het rijkste raster dat we onderweg zagen. */
-    function maakRaster() {
+    function maakRaster(willekeur) {
+        willekeur = willekeur || losseWillekeur;
         var beste = null, besteWaarde = -1;
 
         for (var poging = 0; poging < 40; poging++) {
-            var letters = trekLetters();
+            var letters = trekLetters(willekeur);
 
             var klinkers = 0;
             for (var i = 0; i < VAKKEN; i++) {
@@ -381,15 +417,16 @@
        niet. Daarom schaalt de opbrengst met de wortel van het aantal vindbare
        woorden. Zo blijft een tegenstander op een mager raster even geloofwaardig
        als op een raster met tweehonderd woorden, en blijft het niveau kloppen. */
-    function maakBots(niveau, oplossing) {
+    function maakBots(niveau, oplossing, willekeur) {
+        willekeur = willekeur || losseWillekeur;
         var instelling = NIVEAUS[niveau];
         var namen = BOTNAMEN.slice();
         var beschikbaar = oplossing.woorden.length;
         var bots = [];
 
         for (var i = 0; i < VELDGROOTTE - 1; i++) {
-            var naam = namen.splice(Math.floor(Math.random() * namen.length), 1)[0];
-            var vaardigheid = instelling.laag + Math.random() * (instelling.hoog - instelling.laag);
+            var naam = namen.splice(Math.floor(willekeur() * namen.length), 1)[0];
+            var vaardigheid = instelling.laag + willekeur() * (instelling.hoog - instelling.laag);
 
             var hoeveel = Math.round(vaardigheid * Math.sqrt(beschikbaar));
             hoeveel = Math.max(1, Math.min(hoeveel, Math.floor(beschikbaar * 0.85) || 1));
@@ -399,8 +436,8 @@
             var spreiding = (vaardigheid - instelling.laag) / Math.max(0.001, instelling.hoog - instelling.laag);
             var voorkeur = 1.4 - spreiding * 0.8;
 
-            var profiel = PROFIELEN[Math.floor(Math.random() * PROFIELEN.length)];
-            var vondsten = planVondsten(oplossing.woorden, hoeveel, voorkeur, profiel);
+            var profiel = PROFIELEN[Math.floor(willekeur() * PROFIELEN.length)];
+            var vondsten = planVondsten(oplossing.woorden, hoeveel, voorkeur, profiel, willekeur);
 
             var punten = 0, beste = '';
             for (var v = 0; v < vondsten.length; v++) {
@@ -427,7 +464,7 @@
     /* Kiest de woorden die één tegenstander gaat vinden en zet er tijdstippen
        bij. Korte woorden worden vaker gekozen dan lange, en lange woorden vallen
        gemiddeld later in de ronde: die zie je nu eenmaal niet meteen liggen. */
-    function planVondsten(alleWoorden, hoeveel, voorkeur, profiel) {
+    function planVondsten(alleWoorden, hoeveel, voorkeur, profiel, willekeur) {
         var vijver = alleWoorden.slice();
         var gewichten = new Array(vijver.length);
         var totaal = 0;
@@ -438,7 +475,7 @@
 
         var gekozen = [];
         for (var k = 0; k < hoeveel && vijver.length > 0; k++) {
-            var trek = Math.random() * totaal, index = 0;
+            var trek = willekeur() * totaal, index = 0;
             while (index < vijver.length - 1 && trek > gewichten[index]) {
                 trek -= gewichten[index];
                 index++;
@@ -451,7 +488,7 @@
 
         var tijden = [];
         for (var t = 0; t < gekozen.length; t++) {
-            tijden.push(profiel.kromme(Math.random()) * RONDE_SECONDEN);
+            tijden.push(profiel.kromme(willekeur()) * RONDE_SECONDEN);
         }
         tijden.sort(function (a, b) { return a - b; });
         gekozen.sort(function (a, b) { return a.length - b.length; });
@@ -459,7 +496,7 @@
         /* Zonder deze schudbeurt vindt elke bot zijn woorden keurig van kort naar
            lang; dat is te netjes om op een echte speler te lijken. */
         for (var w = 0; w < gekozen.length - 1; w++) {
-            if (Math.random() < 0.35) {
+            if (willekeur() < 0.35) {
                 var tussen = gekozen[w]; gekozen[w] = gekozen[w + 1]; gekozen[w + 1] = tussen;
             }
         }
@@ -490,6 +527,131 @@
             }
         }
     }
+
+    /* ---------------------------------------------------------------- *
+     * Samen spelen                                                      *
+     *                                                                   *
+     * Er is precies een lobby. Speelt er iemand, dan schuif je aan bij   *
+     * diezelfde ronde; is er niemand, dan open jij hem. De server stuurt *
+     * alleen een zaadje en de tijden -- raster en tegenstanders leidt    *
+     * elke browser daar zelf uit af, en komt zo op hetzelfde uit.        *
+     * ---------------------------------------------------------------- */
+
+    /* Leeg zolang de dienst nog niet draait; dan blijft samen spelen uit en
+       verandert er niets aan het spel zelf. */
+    var API_BASIS = '';
+
+    /* Tijdens lokaal ontwikkelen mag ?api= dit overschrijven. Alleen op
+       localhost, zodat niemand de live site naar een vreemde server kan
+       laten praten door een link door te sturen. */
+    (function () {
+        if (['localhost', '127.0.0.1'].indexOf(window.location.hostname) === -1) return;
+        var treffer = /[?&]api=([^&]+)/.exec(window.location.search);
+        if (treffer) API_BASIS = decodeURIComponent(treffer[1]);
+    })();
+
+    var POLL_MS = 2000;
+
+    var Samen = {
+        aan: false,
+        rondeId: null,
+        spelerId: null,
+        zaad: null,
+        /* serverTijd - Date.now(), zodat iedereen dezelfde klok volgt. */
+        klokverschil: 0,
+        spelers: [],
+        poll: null,
+        wachtend: false,
+
+        beschikbaar: function () { return Boolean(API_BASIS); },
+
+        vraag: function (pad, gegevens) {
+            return fetch(API_BASIS + pad, {
+                method: gegevens ? 'POST' : 'GET',
+                headers: gegevens ? { 'Content-Type': 'application/json' } : undefined,
+                body: gegevens ? JSON.stringify(gegevens) : undefined
+            }).then(function (antwoord) {
+                if (!antwoord.ok) throw new Error('HTTP ' + antwoord.status);
+                return antwoord.json();
+            });
+        },
+
+        neemOver: function (beeld) {
+            this.klokverschil = beeld.serverTijd - Date.now();
+            this.spelers = beeld.spelers || [];
+            if (beeld.ronde) {
+                this.rondeId = beeld.ronde.id;
+                this.zaad = beeld.ronde.zaad;
+                this.eindigtOp = beeld.ronde.eindigtOp;
+                this.pauzeTot = beeld.ronde.pauzeTot;
+            }
+            if (beeld.jij) this.spelerId = beeld.jij;
+        },
+
+        /* Servertijd omgerekend naar de klok van deze browser. */
+        lokaal: function (serverTijdstip) {
+            return serverTijdstip - this.klokverschil;
+        },
+
+        /* Iedereen behalve ikzelf; mijn eigen stand komt uit het spel zelf,
+           die is verser dan wat de server twee seconden geleden hoorde. */
+        anderen: function () {
+            var eigen = this.spelerId;
+            return this.spelers.filter(function (s) { return s.id !== eigen; });
+        },
+
+        startPollen: function () {
+            var zelf = this;
+            this.stopPollen();
+            this.poll = window.setInterval(function () { zelf.klop(); }, POLL_MS);
+        },
+
+        stopPollen: function () {
+            if (this.poll) { window.clearInterval(this.poll); this.poll = null; }
+        },
+
+        klop: function () {
+            var zelf = this;
+            this.vraag('/samen/stand', {
+                rondeId: this.rondeId,
+                spelerId: this.spelerId,
+                punten: spel ? spel.punten : 0,
+                woorden: spel ? spel.volgorde.length : 0
+            }).then(function (beeld) {
+                if (!beeld.ronde) { zelf.verlaat(); return; }
+
+                var nieuweRonde = beeld.ronde.id !== zelf.rondeId;
+                var kwijt = !beeld.jij;
+                zelf.neemOver(beeld);
+
+                if (!nieuweRonde && !kwijt) return;
+
+                /* Doorgerolde ronde, of de server is ons kwijt (bijvoorbeeld na
+                   een haperende verbinding). In beide gevallen opnieuw
+                   inschrijven; alleen bij een nieuwe ronde stappen we ook
+                   daadwerkelijk in een nieuw spel. */
+                zelf.vraag('/samen/meedoen', { naam: spel ? spel.naam : 'Speler' })
+                    .then(function (opnieuw) {
+                        zelf.neemOver(opnieuw);
+                        if (nieuweRonde) startRonde(opnieuw.ronde);
+                    })
+                    .catch(function () { });
+            }).catch(function () { /* een gemiste klop is niet erg; de volgende komt zo */ });
+        },
+
+        verlaat: function () {
+            this.stopPollen();
+            if (this.rondeId && this.spelerId) {
+                this.vraag('/samen/vertrek', { rondeId: this.rondeId, spelerId: this.spelerId })
+                    .catch(function () { });
+            }
+            this.aan = false;
+            this.rondeId = null;
+            this.spelerId = null;
+            this.spelers = [];
+            this.wachtend = false;
+        }
+    };
 
     /* ---------------------------------------------------------------- *
      * Schermonderdelen                                                  *
@@ -532,6 +694,8 @@
         aftellen: $('aftellen'),
         aftelTekst: $('aftel-tekst'),
         aftelVul: $('aftel-vul'),
+        samenKnop: $('samen-knop'),
+        samenUitleg: $('samen-uitleg'),
         opnieuwKnop: $('opnieuw-knop'),
         menuKnop: $('menu-knop'),
         geluidKnop: $('geluid-knop'),
@@ -710,11 +874,7 @@
     /* Tijdens de ronde volstaat één regel: op welke plek sta je, en wie of
        wat moet je inhalen. De volledige ranglijst volgt na de 90 seconden. */
     function werkLiveRanglijstBij() {
-        var deelnemers = spel.bots.map(function (bot) {
-            return { naam: bot.naam, punten: bot.punten, isIk: false };
-        });
-        deelnemers.push({ naam: spel.naam, punten: spel.punten, isIk: true });
-        deelnemers.sort(function (a, b) { return b.punten - a.punten || (a.isIk ? 1 : -1); });
+        var deelnemers = alleDeelnemers();
 
         var plek = 0;
         for (var i = 0; i < deelnemers.length; i++) {
@@ -736,6 +896,43 @@
                 : ontsnap(boven.naam) + ' staat ' + achter + ' voor';
         }
         el.rangstrip.innerHTML = '<b>' + plek + 'e</b> van ' + deelnemers.length + ' &middot; ' + staart;
+    }
+
+    /* Alle deelnemers van deze ronde: de tegenstanders, de echte medespelers
+       (alleen bij samen spelen) en ikzelf. Mijn eigen stand komt uit het spel
+       en niet van de server, want die is altijd verser. */
+    function alleDeelnemers() {
+        var mijnBeste = '';
+        for (var m = 0; m < spel.volgorde.length; m++) {
+            if (spel.volgorde[m].length > mijnBeste.length) mijnBeste = spel.volgorde[m];
+        }
+
+        var deelnemers = spel.bots.map(function (bot) {
+            return {
+                naam: bot.naam, punten: bot.punten, woorden: bot.woorden,
+                beste: bot.besteWoord, isIk: false, isMens: false, laatIn: 0
+            };
+        });
+
+        if (spel.samen) {
+            Samen.anderen().forEach(function (ander) {
+                deelnemers.push({
+                    naam: ander.naam, punten: ander.punten, woorden: ander.woorden,
+                    beste: '', isIk: false, isMens: true,
+                    laatIn: ander.meegedaanVanaf > 5 ? ander.meegedaanVanaf : 0
+                });
+            });
+        }
+
+        deelnemers.push({
+            naam: spel.naam, punten: spel.punten, woorden: spel.volgorde.length,
+            beste: mijnBeste, isIk: true, isMens: true, laatIn: 0
+        });
+
+        deelnemers.sort(function (a, b) {
+            return b.punten - a.punten || b.woorden - a.woorden || (a.isIk ? 1 : -1);
+        });
+        return deelnemers;
     }
 
     function ontsnap(tekst) {
@@ -860,9 +1057,20 @@
      * Ronde starten, lopen en afronden                                  *
      * ---------------------------------------------------------------- */
 
-    function startRonde() {
+    /* samenRonde is de ronde zoals de server hem beschrijft, of null bij solo.
+       In een gedeelde ronde komt alle willekeur uit het zaadje, zodat elke
+       browser hetzelfde raster en dezelfde tegenstanders uitrekent. Het niveau
+       ligt dan ook vast: koos iedereen zijn eigen niveau, dan zaten we met
+       verschillende tegenstanders in dezelfde ronde. */
+    function startRonde(samenRonde) {
         stopAftellen();
-        var raster = maakRaster();
+
+        var willekeur = samenRonde
+            ? zaadbareWillekeur(zaadUitTekst(samenRonde.zaad))
+            : losseWillekeur;
+        var niveau = samenRonde ? 'normaal' : huidigNiveau;
+
+        var raster = maakRaster(willekeur);
         if (!raster) { el.laadstatus.textContent = 'Kon geen speelbaar raster maken. Probeer opnieuw.'; return; }
 
         var oplossing = maakOplossing(raster);
@@ -872,11 +1080,12 @@
         spel = {
             oplossing: oplossing,
             naam: naam,
-            niveau: huidigNiveau,
+            niveau: niveau,
             gevonden: Object.create(null),
             volgorde: [],
             punten: 0,
-            bots: maakBots(huidigNiveau, oplossing),
+            bots: maakBots(niveau, oplossing, willekeur),
+            samen: Boolean(samenRonde),
             begonnen: 0,
             loopt: true
         };
@@ -893,7 +1102,9 @@
 
         toonScherm('spel');
         laatsteTik = -1;
-        spel.begonnen = Date.now();
+        /* In een gedeelde ronde telt de klok van de server. Stap je halverwege
+           in, dan begin je dus ook halverwege; dat is nu juist de bedoeling. */
+        spel.begonnen = samenRonde ? Samen.lokaal(samenRonde.gestartOp) : Date.now();
         klok = window.setInterval(tik, 100);
         tik();
     }
@@ -901,7 +1112,12 @@
     function tik() {
         if (!spel || !spel.loopt) return;
         var verstreken = (Date.now() - spel.begonnen) / 1000;
-        var over = Math.max(0, RONDE_SECONDEN - verstreken);
+        /* In een gedeelde ronde is de server de baas over het einde; anders
+           zou een browser met een afwijkende klok eerder of later stoppen
+           dan de rest. */
+        var over = spel.samen
+            ? Math.max(0, (Samen.lokaal(Samen.eindigtOp) - Date.now()) / 1000)
+            : Math.max(0, RONDE_SECONDEN - verstreken);
 
         var hele = Math.ceil(over);
         var minuten = Math.floor(hele / 60);
@@ -947,33 +1163,21 @@
         var maximum = spel.oplossing.maximum;
         var percentage = maximum > 0 ? (spel.punten / maximum) * 100 : 0;
 
-        var mijnBeste = '';
-        for (var m = 0; m < spel.volgorde.length; m++) {
-            if (spel.volgorde[m].length > mijnBeste.length) mijnBeste = spel.volgorde[m];
-        }
-
-        var deelnemers = spel.bots.map(function (bot) {
-            return {
-                naam: bot.naam, punten: bot.punten, woorden: bot.woorden,
-                beste: bot.besteWoord, isIk: false
-            };
-        });
-        deelnemers.push({
-            naam: spel.naam, punten: spel.punten, woorden: spel.volgorde.length,
-            beste: mijnBeste, isIk: true
-        });
-        deelnemers.sort(function (a, b) { return b.punten - a.punten || b.woorden - a.woorden; });
+        var deelnemers = alleDeelnemers();
 
         var plek = 0;
         var html = '';
         for (var i = 0; i < deelnemers.length; i++) {
             var d = deelnemers[i];
             if (d.isIk) plek = i + 1;
-            html += '<tr' + (d.isIk ? ' class="ik" id="mijn-rij"' : '') + '>' +
+            var klassen = (d.isIk ? 'ik' : '') + (d.isMens && !d.isIk ? ' mens' : '');
+            var onder = d.laatIn
+                ? '<span class="beste-woord">meegedaan vanaf ' + d.laatIn + ' s</span>'
+                : (d.beste ? '<span class="beste-woord">' + ontsnap(d.beste) + '</span>' : '');
+            html += '<tr' + (klassen.trim() ? ' class="' + klassen.trim() + '"' : '') +
+                (d.isIk ? ' id="mijn-rij"' : '') + '>' +
                 '<td>' + (i + 1) + '</td>' +
-                '<td>' + ontsnap(d.naam) +
-                (d.beste ? '<span class="beste-woord">' + ontsnap(d.beste) + '</span>' : '') +
-                '</td>' +
+                '<td>' + ontsnap(d.naam) + onder + '</td>' +
                 '<td>' + d.woorden + '</td>' +
                 '<td>' + d.punten + '</td></tr>';
         }
@@ -1022,7 +1226,9 @@
             el.sessie.hidden = true;
         }
 
-        startAftellen();
+        if (spel.samen) startSamenAftellen(); else startAftellen();
+        /* In een gedeelde ronde kun je niet eerder beginnen dan de anderen. */
+        el.opnieuwKnop.hidden = Boolean(spel.samen);
     }
 
     /* ---------------------------------------------------------------- *
@@ -1061,6 +1267,26 @@
             tekenAftellen();
             if (aftelRest <= 0) { stopAftellen(); startRonde(); }
         }, 1000);
+    }
+
+    /* Bij samen spelen bepaalt de server wanneer de volgende ronde begint. Het
+       aftellen hier is dus alleen weergave: de ronde wordt gestart door de
+       eerstvolgende klop die een nieuwe ronde meldt, nooit door deze klok.
+       Anders zouden twee browsers met een iets andere klok uit de pas lopen. */
+    function startSamenAftellen() {
+        stopAftellen();
+        el.aftellen.hidden = false;
+        el.aftellen.classList.remove('is-pauze');
+
+        var teken = function () {
+            var rest = Math.max(0, Math.round((Samen.lokaal(Samen.pauzeTot) - Date.now()) / 1000));
+            el.aftelVul.style.width = Math.min(100, rest / PAUZE_SECONDEN * 100) + '%';
+            el.aftelTekst.textContent = rest > 0
+                ? 'Volgende ronde over ' + rest + '\u2026'
+                : 'Wachten op de volgende ronde\u2026';
+        };
+        teken();
+        aftelKlok = window.setInterval(teken, 250);
     }
 
     function stopAftellen() {
@@ -1127,8 +1353,42 @@
     el.opnieuwKnop.addEventListener('click', function () { stopAftellen(); startRonde(); });
     el.menuKnop.addEventListener('click', function () {
         stopAftellen();
+        if (Samen.aan) Samen.verlaat();
         nieuweSessie();
+        el.opnieuwKnop.hidden = false;
         toonScherm('start');
+    });
+
+    el.samenKnop.addEventListener('click', function () {
+        Geluid.wek();
+        nieuweSessie();
+        el.samenKnop.disabled = true;
+        el.samenKnop.textContent = 'Aansluiten\u2026';
+
+        Samen.vraag('/samen/meedoen', { naam: (el.naam.value || '').trim() || 'Jij' })
+            .then(function (beeld) {
+                Samen.aan = true;
+                Samen.neemOver(beeld);
+                Samen.startPollen();
+
+                if (beeld.fase === 'scorebord') {
+                    /* Er wordt net afgerond. Instappen in een ronde die al
+                       voorbij is heeft geen zin, dus wachten we op de volgende;
+                       de eerstvolgende klop start hem. */
+                    el.laadstatus.textContent = 'Er wordt net een ronde afgerond. ' +
+                        'Je doet mee vanaf de volgende, die begint zo.';
+                } else {
+                    startRonde(beeld.ronde);
+                }
+            })
+            .catch(function (fout) {
+                el.laadstatus.textContent = 'Samen spelen lukte niet (' + fout.message +
+                    '). Solo spelen kan gewoon.';
+            })
+            .then(function () {
+                el.samenKnop.disabled = false;
+                el.samenKnop.textContent = 'Samen spelen';
+            });
     });
     el.stopKnop.addEventListener('click', function () { beeindig(); });
 
@@ -1173,6 +1433,10 @@
                 losOp('abcdefghijklmnop'.split(''));
                 el.startKnop.disabled = false;
                 el.startLabel.textContent = 'Start de jacht';
+                if (Samen.beschikbaar()) {
+                    el.samenKnop.hidden = false;
+                    el.samenUitleg.hidden = false;
+                }
                 el.laadstatus.textContent = Woordenboek.aantal.toLocaleString('nl-NL') +
                     ' Nederlandse woorden geladen. Vanaf hier speelt alles offline.';
             })

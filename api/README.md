@@ -23,8 +23,41 @@ cd api && npm start
 curl -s localhost:3000/gezond
 ```
 
-## Stand van zaken
+## Eindpunten
 
-Casco. `/gezond` bewijst dat de service draait en zijn variabelen ziet.
-De eindpunten voor het uitgeven van een ronde, het narekenen van een
-inzending en de ranglijst volgen.
+| | |
+| --- | --- |
+| `GET /gezond` | draait de service, en ziet hij zijn variabelen |
+| `GET /samen/nu` | de lopende ronde, zonder mee te doen |
+| `POST /samen/meedoen` | `{naam}` — sluit aan bij de lopende ronde, of opent er een |
+| `POST /samen/stand` | `{rondeId, spelerId, punten, woorden}` — meldt je stand en haalt die van de anderen op |
+| `POST /samen/vertrek` | `{rondeId, spelerId}` |
+
+## De lobby
+
+Er is er **precies één**, en dat is een constructie en geen afspraak: de hele
+toestand zit in één variabele in `lobby.js`. Wie binnenkomt terwijl er
+gespeeld wordt sluit aan; is er niemand, dan opent de nieuwkomer de lobby.
+
+De server verstuurt **geen raster en geen tegenstanders**, alleen een zaadje.
+Elke browser leidt daaruit hetzelfde raster en dezelfde tegenstanders af. Er
+valt dus niets uit de pas te lopen.
+
+> **Houd `replicas` op 1.** De lobbytoestand staat in het geheugen. Bij meer
+> instanties krijgt elke instantie zijn eigen lobby en is de belofte gebroken.
+> Moet het ooit schalen, verhuis die toestand dan eerst naar Postgres.
+
+Een herstart beëindigt de lopende ronde. Bij rondes van 90 seconden is dat
+nauwelijks hinderlijk.
+
+## Tests
+
+```sh
+node api/lobby.test.js
+```
+
+## Nog te bouwen
+
+Het narekenen van inzendingen (de server lost het raster zelf op en gelooft
+de score uit de browser nooit), spelers met naam en herstelcode, en de
+geschiedenispagina. Daarvoor is Postgres nodig; de lobby hierboven niet.

@@ -239,6 +239,26 @@ body::before {
     cursor: progress;
 }
 
+.knop-samen {
+    margin-top: 10px;
+    border-color: #0a3a70;
+    background: linear-gradient(#3b8fe0, var(--blauw));
+    font-size: 1rem;
+    box-shadow: 0 5px 0 #0a3a70, 0 8px 16px rgba(0, 0, 0, .3);
+}
+
+.knop-samen:active:not(:disabled) {
+    box-shadow: 0 1px 0 #0a3a70;
+}
+
+.samen-uitleg {
+    margin-top: 8px;
+    font-size: .8rem;
+    line-height: 1.45;
+    text-align: center;
+    color: #7a5205;
+}
+
 .knop-stil {
     margin-top: 14px;
     border-color: rgba(0, 0, 0, .3);
@@ -696,6 +716,13 @@ body::before {
 
 .eindstand tr.ik td:last-child {
     border-radius: 0 8px 8px 0;
+}
+
+/* Echte medespelers onderscheiden zich van de tegenstanders. */
+.eindstand tr.mens td:nth-child(2)::after {
+    content: " \1F464";
+    opacity: .5;
+    font-size: .8em;
 }
 
 .beste-woord {

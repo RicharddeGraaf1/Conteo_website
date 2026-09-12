@@ -51,4 +51,13 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
   tegenstanders kiezen echte woorden uit het opgeloste raster en vinden die op
   geplande tijdstippen, elk volgens een profiel (spurter, denker, gestaag,
   golver, laatkomer). Daardoor blijft de ranglijst tijdens de ronde schuiven.
-  Zodra er een database is, schuiven echte spelers hier in de plaats van bots.
+  Bij samen spelen komen echte medespelers er bovenop, dus dan zijn het er
+  meer dan 20. Bots halverwege een ronde wegnemen zou scores van het bord
+  laten verdwijnen; dat is erger dan een veld van 22.
+- **Samen spelen** loopt via `api/` (zie `api/README.md`). De server stuurt
+  alleen een zaadje; elke browser leidt daar hetzelfde raster en dezelfde
+  tegenstanders uit af. Alle willekeur loopt daarom via `zaadbareWillekeur`,
+  niet via `Math.random` — nieuwe willekeur in het spel moet dat pad volgen,
+  anders lopen browsers in een gedeelde ronde uit elkaar.
+- `API_BASIS` boven in `woordjacht.js` is leeg tot de dienst draait; zolang
+  die leeg is blijft de knop 'Samen spelen' verborgen en verandert er niets.
