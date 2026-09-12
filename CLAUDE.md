@@ -44,13 +44,20 @@ HTML wel meteen ververst. Een bezoeker kreeg daardoor na een deploy nieuwe
 HTML met oude javascript — wat zich uitte als onverklaarbare fouten die op
 jouw machine niet te reproduceren waren.
 
-`public/_headers` zet dat recht: alles revalideert per bezoek (een 304 van een
-paar honderd bytes), behalve `woorden.txt`, die een megabyte groot is en
-alleen verandert als hij opnieuw gebouwd wordt.
+`public/_headers` helpt daar maar half bij. Gemeten gedrag: de regel pakt wel
+op html en op `.txt`, maar **Pages laat de Cache-Control van `.js` en `.css`
+niet overschrijven** — die blijven op vier uur staan, ook bij een verse MISS.
+Bij twee overlappende regels plakt Pages de waarden bovendien achter elkaar,
+dus houd het bij die ene `/*`-regel.
 
-De `?v=` achter de verwijzingen in de HTML was eenmalig nodig om al gecachte
-browsers los te wrikken. Met `_headers` op zijn plek hoeft dat getal niet meer
-bij elke wijziging omhoog.
+Voor js en css is een versie-URL daarom de enige betrouwbare weg. De workflow
+stempelt bij elke deploy de commit-hash achter de eigen `.js`- en
+`.css`-verwijzingen in de HTML (absolute URL's blijven ongemoeid). Dat gaat
+vanzelf: een stempel die je met de hand moet bijwerken wordt een keer
+vergeten, en dan zoek je een fout die op je eigen machine niet bestaat.
+
+Merk op dat dit ook de omgekeerde valkuil dekt: een fout die een bezoeker wel
+ziet en jij niet, is vaak gewoon een oude cache.
 
 ## Woordjacht (`public/woordjacht/`)
 

@@ -14,6 +14,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Cloudflare Pages geeft js en css vier uur cache mee en laat dat via
+      # _headers niet overschrijven (gemeten: de regel pakt wel op html en
+      # .txt, niet op .js en .css). Bezoekers kregen daardoor na een deploy
+      # nieuwe html met oude javascript. Een versiestempel per commit is de
+      # enige betrouwbare weg -- en hij hoort automatisch te gaan, want een
+      # stempel die je met de hand moet bijwerken wordt een keer vergeten.
+      - name: Versiestempel op eigen js en css
+        run: |
+          versie="${GITHUB_SHA::8}"
+          find public -name '*.html' -print0 | xargs -0 sed -i -E \
+            "s@(src=\"[^\"://]+\.js)(\?v=[^\"]*)?\"@\1?v=$versie\"@g; \
+             s@(href=\"[^\"://]+\.css)(\?v=[^\"]*)?\"@\1?v=$versie\"@g"
+          echo "Gestempeld met $versie:"
+          grep -rhoE '(src|href)="[^"]*\.(js|css)\?v=[^"]*"' public || true
+
       - name: Deploy naar Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
