@@ -114,6 +114,15 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
 - `API_BASIS` boven in `woordjacht.js` wijst naar `https://api.elconteo.nl`
   (Railway). Leeg maken schakelt samen spelen uit; de knop verdwijnt dan en
   `Samen.vraag` weigert, zodat er nooit een verzoek naar de eigen site gaat.
+- **Slepen gaat op middelpunten, niet op rechthoeken.** Een steen oppikken
+  zodra je hem ergens raakt maakt schuine halen onbruikbaar: op de diagonaal
+  tussen twee buren zit je 48 tot 57 px van het middelpunt van de tussensteen,
+  maar al na 3 a 4 px wiebel in zijn rechthoek. `vakBijPunt` kijkt daarom naar
+  de afstand tot het middelpunt (`RAAKSTRAAL`, deel van de hart-op-hartafstand),
+  en `volgHaal` loopt de lijn tussen twee muisposities af zodat een snelle haal
+  geen steen overslaat. Gemeten speelruimte: 18 px bij 320 px breed tot 28 px
+  bij 768 px. Een tik gebruikt nog wel gewoon `elementFromPoint` — die is
+  bedoeld en mag ruimhartig zijn.
 - **Let op bij `hidden`:** de browser verbergt `[hidden]` via de
   useragent-stijl, en die verliest van elke auteursregel met een eigen
   `display`. `.knop { display: block }` maakte een verborgen knop daardoor

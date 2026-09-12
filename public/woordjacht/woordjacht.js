@@ -864,6 +864,7 @@
     var getypt = '';
     var pointerNeer = false;
     var versleept = false;
+    var laatsteX = 0, laatsteY = 0;
     var klok = null;
     var laatsteTik = -1;
     var nagloed = null;
@@ -1104,11 +1105,76 @@
         return BUREN[pad[pad.length - 1]].indexOf(vak) !== -1;
     }
 
+    /* Voor een tik volstaat 'welke steen zit onder de vinger'. Ruimhartig, en
+       dat hoort ook: een tik is bedoeld. */
     function vakOnder(gebeurtenis) {
         var doel = document.elementFromPoint(gebeurtenis.clientX, gebeurtenis.clientY);
         if (!doel) return -1;
         var steen = doel.closest ? doel.closest('.steen') : null;
         return steen ? Number(steen.dataset.vak) : -1;
+    }
+
+    /* Slepen werkt anders. Een steen oppikken zodra je hem ergens raakt maakt
+       schuine halen bijna onbruikbaar: de rechte lijn tussen twee diagonale
+       buren scheert vlak langs de hoek waar vier stenen samenkomen. Gemeten op
+       het echte raster zit je daar 48 tot 57 pixels van het MIDDELPUNT van de
+       tussensteen, maar al na 3 a 4 pixels wiebel in zijn RECHTHOEK. Vandaar
+       dat een sleep alleen telt binnen een cirkel rond het middelpunt: de
+       speelruimte gaat daarmee van een paar pixels naar ruim twintig. */
+    var RAAKSTRAAL = 0.42;      /* deel van de hart-op-hartafstand */
+
+    var middelpunten = null;
+    var raakAfstand = 0;
+
+    function meetRaster() {
+        middelpunten = [];
+        for (var i = 0; i < VAKKEN; i++) {
+            var doos = stenen[i].getBoundingClientRect();
+            middelpunten.push({ x: doos.left + doos.width / 2, y: doos.top + doos.height / 2 });
+        }
+        var spatie = Math.abs(middelpunten[1].x - middelpunten[0].x) || 1;
+        raakAfstand = spatie * RAAKSTRAAL;
+    }
+
+    /* Het dichtstbijzijnde vak, mits dichtbij genoeg. Zit het punt in de goot
+       of op een hoek, dan hoort daar geen steen bij en gebeurt er niets. */
+    function vakBijPunt(x, y) {
+        if (!middelpunten) return -1;
+        var beste = -1, besteAfstand = raakAfstand * raakAfstand;
+        for (var i = 0; i < VAKKEN; i++) {
+            var dx = x - middelpunten[i].x, dy = y - middelpunten[i].y;
+            var afstand = dx * dx + dy * dy;
+            if (afstand < besteAfstand) { besteAfstand = afstand; beste = i; }
+        }
+        return beste;
+    }
+
+    function neemVakMee(vak) {
+        if (vak < 0 || vak === pad[pad.length - 1]) return;
+
+        /* Terugkrabbelen: over de voorlaatste steen gaan haalt de laatste weg. */
+        if (pad.length >= 2 && vak === pad[pad.length - 2]) {
+            pad.pop();
+            versleept = true;
+            tekenSelectie();
+            return;
+        }
+        if (magToevoegen(vak)) {
+            pad.push(vak);
+            versleept = true;
+            tekenSelectie();
+        }
+    }
+
+    /* Een snelle haal levert maar een paar tussenposities op; zonder de lijn
+       af te lopen sla je een cirkel zomaar over en blijft het pad steken. */
+    function volgHaal(vanX, vanY, naarX, naarY) {
+        var lengte = Math.sqrt((naarX - vanX) * (naarX - vanX) + (naarY - vanY) * (naarY - vanY));
+        var stappen = Math.max(1, Math.ceil(lengte / Math.max(4, raakAfstand * 0.5)));
+        for (var stap = 1; stap <= stappen; stap++) {
+            var deel = stap / stappen;
+            neemVakMee(vakBijPunt(vanX + (naarX - vanX) * deel, vanY + (naarY - vanY) * deel));
+        }
     }
 
     el.raster.addEventListener('pointerdown', function (gebeurtenis) {
@@ -1118,6 +1184,9 @@
         gebeurtenis.preventDefault();
         Geluid.wek();
         getypt = '';
+        meetRaster();
+        laatsteX = gebeurtenis.clientX;
+        laatsteY = gebeurtenis.clientY;
 
         /* Tikmodus: het pad staat nog open van een vorige tik. */
         if (pad.length > 0) {
@@ -1139,21 +1208,9 @@
 
     el.raster.addEventListener('pointermove', function (gebeurtenis) {
         if (!pointerNeer || !spel || !spel.loopt) return;
-        var vak = vakOnder(gebeurtenis);
-        if (vak < 0 || vak === pad[pad.length - 1]) return;
-
-        /* Terugkrabbelen: over de voorlaatste steen gaan haalt de laatste weg. */
-        if (pad.length >= 2 && vak === pad[pad.length - 2]) {
-            pad.pop();
-            versleept = true;
-            tekenSelectie();
-            return;
-        }
-        if (magToevoegen(vak)) {
-            pad.push(vak);
-            versleept = true;
-            tekenSelectie();
-        }
+        volgHaal(laatsteX, laatsteY, gebeurtenis.clientX, gebeurtenis.clientY);
+        laatsteX = gebeurtenis.clientX;
+        laatsteY = gebeurtenis.clientY;
     });
 
     function pointerLos() {
