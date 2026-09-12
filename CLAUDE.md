@@ -69,6 +69,20 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
   staan (licentievoorwaarde) en dus mee gedeployd worden.
 - Punten = aantal letters per woord; DOEL is het maximum van dat raster, dus
   het percentage is vergelijkbaar tussen rasters.
+- **De sterkte van de tegenstanders is geijkt op een veld van negentien.** Je
+  speelt niet tegen de mediaan maar tegen de *beste van negentien trekkingen*,
+  en die ligt fors hoger. Toen het veld van 5 naar 19 ging werd het spel
+  daardoor ineens veel zwaarder zonder dat er aan `NIVEAUS` iets veranderd was.
+  Meet bij elke aanpassing wat de BESTE bot haalt, niet de mediaan. Huidige
+  ijking (percentage van het rastermaximum, mediaan over 30 rondes):
+  makkelijk 9%, normaal 15%, lastig 22%, meester 36%.
+- **Minstens om de ronde een woord van negen letters of meer.** Vanzelf heeft
+  maar 9,5% van de rasters er een. `maakRaster` eist er daarom periodiek een:
+  solo via een schuld (had de vorige ronde er geen, dan moet deze het
+  leveren), bij samen spelen via een trekking uit het zaadje — die moet de
+  eerste uit de generator blijven, anders leiden browsers verschillende
+  rasters af. Gemeten resultaat: 52,5% van de rondes, en twee saaie rondes op
+  rij kwam nog 1 keer in 200 voor.
 - Het veld telt altijd 20 deelnemers: de speler plus 19 tegenstanders. Die
   tegenstanders kiezen echte woorden uit het opgeloste raster en vinden die op
   geplande tijdstippen, elk volgens een profiel (spurter, denker, gestaag,

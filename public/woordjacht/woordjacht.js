@@ -39,11 +39,18 @@
 
     /* Vaardigheid van de tegenstanders. Zie maakBots(): het getal wordt
        vermenigvuldigd met de wortel van het aantal vindbare woorden. */
+    /* Deze getallen zijn geijkt op een veld van negentien tegenstanders. Dat
+       is belangrijker dan het lijkt: je speelt niet tegen de middelmaat maar
+       tegen de beste van negentien trekkingen, en die ligt fors hoger dan de
+       mediaan. Toen het veld van vijf naar negentien ging werd het spel
+       daardoor ineens veel zwaarder zonder dat er aan de sterkte iets
+       veranderd was. Pas deze reeksen dus nooit aan zonder opnieuw te meten
+       wat de BESTE bot haalt; de mediaan zegt hier weinig. */
     var NIVEAUS = {
-        makkelijk: { naam: 'Makkelijk', laag: 1.0, hoog: 1.9 },
-        normaal: { naam: 'Normaal', laag: 1.8, hoog: 2.9 },
-        lastig: { naam: 'Lastig', laag: 2.7, hoog: 4.0 },
-        meester: { naam: 'Meester', laag: 3.8, hoog: 5.6 }
+        makkelijk: { naam: 'Makkelijk', laag: 0.40, hoog: 1.10 },
+        normaal: { naam: 'Normaal', laag: 0.80, hoog: 1.80 },
+        lastig: { naam: 'Lastig', laag: 1.50, hoog: 2.80 },
+        meester: { naam: 'Meester', laag: 2.40, hoog: 4.20 }
     };
 
     var BOTNAMEN = [
@@ -281,15 +288,28 @@
     var MIN_PUNTEN = 280;
     var MIN_WOORDEN = 45;
     var MIN_LANGSTE = 6;
+    var LANG_WOORD = 9;     /* de lengte die minstens om de ronde moet voorkomen */
+
+    /* Slechts een op de tien rasters bevat vanzelf een woord van negen letters
+       of meer, en juist die maken een ronde de moeite waard. Daarom eisen we
+       er periodiek een. Dit onthoudt of de vorige ronde er een had; zo niet,
+       dan moet de volgende het leveren. Twee saaie rondes achter elkaar kan
+       dus niet. Bij samen spelen telt deze schuld niet: daar moet de eis uit
+       het zaadje volgen, anders krijgen spelers die op verschillende momenten
+       instapten verschillende rasters. */
+    var langWoordSchuld = false;
 
     /* Trekt net zolang rasters tot er een speelbaar exemplaar tussen zit:
        genoeg klinkers, genoeg te halen punten en minstens één langer woord.
        Lukt dat niet, dan wint het rijkste raster dat we onderweg zagen. */
-    function maakRaster(willekeur) {
+    function maakRaster(willekeur, eisLangWoord) {
         willekeur = willekeur || losseWillekeur;
         var beste = null, besteWaarde = -1;
+        /* Een lang woord vergt meer pogingen, maar een raster oplossen kost
+           maar een paar milliseconden; doorschudden is goedkoop. */
+        var maxPogingen = eisLangWoord ? 60 : 40;
 
-        for (var poging = 0; poging < 40; poging++) {
+        for (var poging = 0; poging < maxPogingen; poging++) {
             var letters = trekLetters(willekeur);
 
             var klinkers = 0;
@@ -305,11 +325,18 @@
                 if (woorden[w].length > langste) langste = woorden[w].length;
             }
 
-            if (punten > besteWaarde) {
-                besteWaarde = punten;
+            /* Gaan we voor een lang woord, dan telt de lengte zwaarder dan de
+               puntenoogst -- anders wint een rijk raster zonder lang woord het
+               van een magerder raster dat wel levert wat gevraagd is. */
+            var waarde = eisLangWoord ? langste * 100000 + punten : punten;
+            if (waarde > besteWaarde) {
+                besteWaarde = waarde;
                 beste = { letters: letters, woorden: woorden };
             }
-            if (punten >= MIN_PUNTEN && woorden.length >= MIN_WOORDEN && langste >= MIN_LANGSTE) break;
+
+            var voldoet = punten >= MIN_PUNTEN && woorden.length >= MIN_WOORDEN && langste >= MIN_LANGSTE;
+            if (eisLangWoord && langste < LANG_WOORD) voldoet = false;
+            if (voldoet) break;
         }
         return beste;
     }
@@ -1092,7 +1119,12 @@
             : losseWillekeur;
         var niveau = samenRonde ? 'normaal' : huidigNiveau;
 
-        var raster = maakRaster(willekeur);
+        /* Bij samen spelen moet de eis uit het zaadje volgen, zodat elke
+           browser hem hetzelfde afleidt. Deze trekking is met opzet de eerste
+           uit de generator, nog voor het raster getrokken wordt. */
+        var eisLangWoord = samenRonde ? willekeur() < 0.5 : langWoordSchuld;
+
+        var raster = maakRaster(willekeur, eisLangWoord);
         if (!raster) { el.laadstatus.textContent = 'Kon geen speelbaar raster maken. Probeer opnieuw.'; return; }
 
         var oplossing = maakOplossing(raster);
@@ -1111,6 +1143,11 @@
             begonnen: 0,
             loopt: true
         };
+
+        /* Leverde deze ronde geen lang woord, dan moet de volgende het doen. */
+        if (!samenRonde) {
+            langWoordSchuld = ((oplossing.perLengte[9] || 0) + (oplossing.perLengte[10] || 0)) === 0;
+        }
 
         for (var i = 0; i < VAKKEN; i++) stenen[i].textContent = oplossing.letters[i];
         el.gevonden.innerHTML = '';
