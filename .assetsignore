@@ -6,5 +6,6 @@
 .github
 .gitignore
 node_modules
+tools
 *.log
 .DS_Store

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Woordjacht | Nederlands woordspel zonder reclame — Conteo</title>
+    <meta name="description"
+        content="Woordjacht: vind in 90 seconden zoveel mogelijk Nederlandse woorden in een 4x4-raster. Gratis, zonder advertenties, zonder account, speelt offline door.">
+    <link rel="canonical" href="https://elconteo.nl/woordjacht/">
+    <meta name="theme-color" content="#0b3c78">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Conteo Consulting">
+    <meta property="og:locale" content="nl_NL">
+    <meta property="og:url" content="https://elconteo.nl/woordjacht/">
+    <meta property="og:title" content="Woordjacht | Nederlands woordspel zonder reclame">
+    <meta property="og:description"
+        content="Vind in 90 seconden zoveel mogelijk Nederlandse woorden in een 4x4-raster. Gratis, zonder advertenties, zonder account.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preload" href="woorden.txt" as="fetch" crossorigin="anonymous">
+    <link rel="stylesheet" href="woordjacht.css">
+</head>
+
+<body>
+
+    <a class="terug" href="/">&larr; elconteo.nl</a>
+
+    <button type="button" class="geluid" id="geluid-knop" aria-pressed="true" title="Geluid aan of uit">
+        <span aria-hidden="true" id="geluid-icoon">&#9834;</span>
+        <span class="vw">Geluid aan of uit</span>
+    </button>
+
+    <main class="speelveld">
+
+        <h1 class="logo"><span>Woordjacht</span></h1>
+
+        <!-- ============ STARTSCHERM ============ -->
+        <section id="startscherm" class="paneel start" aria-labelledby="start-titel">
+            <h2 id="start-titel">Klaar voor de jacht?</h2>
+            <p class="start-uitleg">
+                Je krijgt <strong>90 seconden</strong> en een raster van 16 letters. Sleep over
+                aangrenzende letters &mdash; ook diagonaal &mdash; en maak zoveel mogelijk Nederlandse
+                woorden. Elke letter in een woord is <strong>1 punt</strong>, dus lange woorden leveren
+                het meeste op. Elke steen mag maar één keer per woord worden gebruikt.
+            </p>
+
+            <div class="veld">
+                <label for="naam">Jouw naam</label>
+                <input id="naam" type="text" maxlength="14" placeholder="Speler" autocomplete="nickname"
+                    spellcheck="false">
+            </div>
+
+            <fieldset class="veld">
+                <legend>Niveau van de tegenstanders</legend>
+                <div class="niveaus" id="niveaus" role="radiogroup" aria-label="Niveau van de tegenstanders">
+                    <button type="button" class="niveau" data-niveau="makkelijk" role="radio"
+                        aria-checked="false">Makkelijk</button>
+                    <button type="button" class="niveau is-actief" data-niveau="normaal" role="radio"
+                        aria-checked="true">Normaal</button>
+                    <button type="button" class="niveau" data-niveau="lastig" role="radio"
+                        aria-checked="false">Lastig</button>
+                    <button type="button" class="niveau" data-niveau="meester" role="radio"
+                        aria-checked="false">Meester</button>
+                </div>
+            </fieldset>
+
+            <button type="button" id="start-knop" class="knop knop-groot" disabled>
+                <span id="start-label">Woordenboek laden&hellip;</span>
+            </button>
+
+            <p class="start-status" id="laadstatus" role="status">Even geduld, het Nederlandse woordenboek
+                wordt eenmalig opgehaald.</p>
+
+            <p class="record" id="record" hidden></p>
+        </section>
+
+        <!-- ============ SPEELSCHERM ============ -->
+        <section id="spelscherm" class="paneel spel" hidden>
+
+            <div class="meters">
+                <div class="meter">
+                    <span class="meter-kop">Tijd</span>
+                    <strong class="meter-waarde" id="tijd">1:30</strong>
+                </div>
+                <div class="meter">
+                    <span class="meter-kop">Punten</span>
+                    <strong class="meter-waarde" id="punten">0</strong>
+                </div>
+                <div class="meter meter-doel">
+                    <span class="meter-kop">Doel</span>
+                    <strong class="meter-waarde"><span id="doel-nu">0</span><span class="meter-max"
+                            id="doel-max">0</span></strong>
+                </div>
+            </div>
+
+            <div class="balk" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                aria-label="Voortgang richting het maximum" id="balk">
+                <div class="balk-vul" id="balk-vul"></div>
+                <span class="balk-tekst" id="balk-tekst">0,0 %</span>
+            </div>
+
+            <p class="rangstrip" id="rangstrip"></p>
+
+            <p class="huidig" id="huidig" aria-live="polite"><span class="huidig-leeg">Sleep over de letters</span></p>
+
+            <div class="raster" id="raster" role="application"
+                aria-label="Letterraster, sleep of typ om woorden te maken"></div>
+
+            <div class="onderin">
+                <div class="gevonden-blok">
+                    <h3>Gevonden <span class="telling" id="aantal-gevonden">0</span></h3>
+                    <ul class="gevonden" id="gevonden" aria-live="polite"></ul>
+                </div>
+                <table class="lengtes">
+                    <caption>Beschikbaar</caption>
+                    <tbody id="lengtetabel"></tbody>
+                </table>
+            </div>
+
+            <button type="button" class="knop knop-stil" id="stop-knop">Ronde afbreken</button>
+        </section>
+
+        <!-- ============ UITSLAG ============ -->
+        <section id="uitslagscherm" class="paneel uitslag" hidden aria-labelledby="uitslag-titel">
+            <h2 id="uitslag-titel">Ranglijst</h2>
+            <p class="uitslag-samenvatting" id="uitslag-samenvatting"></p>
+
+            <table class="eindstand">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Speler</th>
+                        <th scope="col">Woorden</th>
+                        <th scope="col">Punten</th>
+                    </tr>
+                </thead>
+                <tbody id="eindstand"></tbody>
+            </table>
+
+            <details class="gemist">
+                <summary>Woorden die je liet liggen <span id="gemist-telling"></span></summary>
+                <p class="gemist-uitleg">De langste woorden die in dit raster verstopt zaten.</p>
+                <ul class="woordwolk" id="gemist"></ul>
+            </details>
+
+            <details class="gemist">
+                <summary>Jouw woorden <span id="mijn-telling"></span></summary>
+                <ul class="woordwolk" id="mijn-woorden"></ul>
+            </details>
+
+            <div class="uitslag-knoppen">
+                <button type="button" class="knop knop-groot" id="opnieuw-knop">Nog een ronde</button>
+                <button type="button" class="knop knop-stil" id="menu-knop">Terug naar het menu</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="voetnoot">
+        <p>
+            Woordjacht is een hobbyproject van <a href="/">Conteo Consulting</a>. Geen advertenties, geen
+            account, geen trackers &mdash; na het laden speelt het spel volledig in je browser.
+        </p>
+        <p>
+            Woordenlijst: <a href="https://github.com/OpenTaal/opentaal-wordlist" rel="noopener"
+                target="_blank">OpenTaal</a>, gebruikt onder de BSD- en CC BY 3.0-licentie.
+            Woordjacht is niet verbonden aan de gelijknamige app.
+        </p>
+    </footer>
+
+    <script src="woordjacht.js"></script>
+</body>
+
+</html>
