@@ -729,6 +729,48 @@ body::before {
     margin-top: 14px;
 }
 
+.sessie {
+    margin-top: 4px;
+    padding: 8px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .42);
+    font-size: .84rem;
+    font-weight: 800;
+    text-align: center;
+    color: #6b4604;
+}
+
+.aftellen {
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: .82rem;
+    font-weight: 800;
+    color: #6b4604;
+}
+
+.aftel-balk {
+    display: block;
+    height: 6px;
+    margin-top: 5px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .16);
+    overflow: hidden;
+}
+
+.aftel-vul {
+    display: block;
+    height: 100%;
+    width: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6fe0a0, var(--groen));
+    transition: width .95s linear;
+}
+
+.aftellen.is-pauze .aftel-vul {
+    background: rgba(0, 0, 0, .25);
+    transition: none;
+}
+
 /* ---------- Geluidsknop ---------- */
 
 .geluid {

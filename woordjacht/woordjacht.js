@@ -17,6 +17,7 @@
     var RONDE_SECONDEN = 90;
     var MIN_LENGTE = 3;
     var AANTAL_BOTS = 5;
+    var PAUZE_SECONDEN = 10;   /* scorebord tussen twee rondes */
 
     /* Letterpot van 96 stenen, gewogen naar de Nederlandse letterfrequentie.
        34 klinkers op 96 stenen geeft gemiddeld bijna zes klinkers per raster.
@@ -441,6 +442,10 @@
         gemistTelling: $('gemist-telling'),
         mijnWoorden: $('mijn-woorden'),
         mijnTelling: $('mijn-telling'),
+        sessie: $('sessie'),
+        aftellen: $('aftellen'),
+        aftelTekst: $('aftel-tekst'),
+        aftelVul: $('aftel-vul'),
         opnieuwKnop: $('opnieuw-knop'),
         menuKnop: $('menu-knop'),
         geluidKnop: $('geluid-knop'),
@@ -470,6 +475,15 @@
     var klok = null;
     var laatsteTik = -1;
     var nagloed = null;
+    var aftelKlok = null;
+    var aftelRest = 0;
+
+    /* Tellers over de hele doorspeelsessie, niet over één ronde. */
+    var sessie = { rondes: 0, punten: 0, maximum: 0, woorden: 0 };
+
+    function nieuweSessie() {
+        sessie = { rondes: 0, punten: 0, maximum: 0, woorden: 0 };
+    }
 
     function toonScherm(welke) {
         el.startscherm.hidden = welke !== 'start';
@@ -755,6 +769,7 @@
      * ---------------------------------------------------------------- */
 
     function startRonde() {
+        stopAftellen();
         var raster = maakRaster();
         if (!raster) { el.laadstatus.textContent = 'Kon geen speelbaar raster maken. Probeer opnieuw.'; return; }
 
@@ -875,7 +890,75 @@
         }).join('') || '<li>geen</li>';
 
         bewaarRecord(spel.punten, percentage);
+
+        sessie.rondes++;
+        sessie.punten += spel.punten;
+        sessie.maximum += maximum;
+        sessie.woorden += spel.volgorde.length;
+
+        if (sessie.rondes > 1) {
+            var sessiePercentage = sessie.maximum > 0 ? (sessie.punten / sessie.maximum) * 100 : 0;
+            el.sessie.hidden = false;
+            el.sessie.textContent = 'Sessie: ' + sessie.rondes + ' rondes, ' + sessie.woorden +
+                ' woorden, ' + sessie.punten + ' punten (' +
+                sessiePercentage.toFixed(1).replace('.', ',') + ' %)';
+        } else {
+            el.sessie.hidden = true;
+        }
+
+        startAftellen();
     }
+
+    /* ---------------------------------------------------------------- *
+     * Doorspelen: scorebord, aftellen, volgende ronde                   *
+     * ---------------------------------------------------------------- */
+
+    /* Het aftellen staat stil zolang de speler de gemiste woorden openklapt
+       of het tabblad weg is: niemand wordt een nieuwe ronde in getrokken
+       terwijl hij nog zit te lezen. */
+    function aftellenGepauzeerd() {
+        if (document.hidden) return true;
+        var lijsten = el.uitslagscherm.querySelectorAll('details');
+        for (var i = 0; i < lijsten.length; i++) {
+            if (lijsten[i].open) return true;
+        }
+        return false;
+    }
+
+    function tekenAftellen() {
+        var pauze = aftellenGepauzeerd();
+        el.aftellen.classList.toggle('is-pauze', pauze);
+        el.aftelVul.style.width = pauze ? '100%' : (aftelRest / PAUZE_SECONDEN * 100) + '%';
+        el.aftelTekst.textContent = pauze
+            ? 'Het aftellen staat stil zolang je leest.'
+            : 'Volgende ronde over ' + aftelRest + '\u2026';
+    }
+
+    function startAftellen() {
+        stopAftellen();
+        aftelRest = PAUZE_SECONDEN;
+        el.aftellen.hidden = false;
+        tekenAftellen();
+        aftelKlok = window.setInterval(function () {
+            if (aftellenGepauzeerd()) { tekenAftellen(); return; }
+            aftelRest--;
+            tekenAftellen();
+            if (aftelRest <= 0) { stopAftellen(); startRonde(); }
+        }, 1000);
+    }
+
+    function stopAftellen() {
+        if (aftelKlok) { window.clearInterval(aftelKlok); aftelKlok = null; }
+        el.aftellen.hidden = true;
+    }
+
+    document.addEventListener('visibilitychange', function () {
+        if (aftelKlok) tekenAftellen();
+    });
+
+    Array.prototype.forEach.call(el.uitslagscherm.querySelectorAll('details'), function (blok) {
+        blok.addEventListener('toggle', function () { if (aftelKlok) tekenAftellen(); });
+    });
 
     function bewaarRecord(punten, percentage) {
         var record = Opslag.lees('record', { punten: 0, percentage: 0 });
@@ -920,9 +1003,17 @@
     el.naam.value = Opslag.lees('naam', '') || '';
     toonRecord();
 
-    el.startKnop.addEventListener('click', function () { Geluid.wek(); startRonde(); });
-    el.opnieuwKnop.addEventListener('click', function () { startRonde(); });
-    el.menuKnop.addEventListener('click', function () { toonScherm('start'); });
+    el.startKnop.addEventListener('click', function () {
+        Geluid.wek();
+        nieuweSessie();
+        startRonde();
+    });
+    el.opnieuwKnop.addEventListener('click', function () { stopAftellen(); startRonde(); });
+    el.menuKnop.addEventListener('click', function () {
+        stopAftellen();
+        nieuweSessie();
+        toonScherm('start');
+    });
     el.stopKnop.addEventListener('click', function () { beeindig(); });
 
     Geluid.aan = Opslag.lees('geluid', true);
