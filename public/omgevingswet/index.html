@@ -167,6 +167,13 @@
   .page-head__sub {
     margin-top: 4px; font-size: 14px; color: var(--ink-2); text-wrap: pretty;
   }
+  .page-head__right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .head-link {
+    font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); text-decoration: none;
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--white);
+    white-space: nowrap; transition: color .18s, border-color .18s;
+  }
+  .head-link:hover { color: var(--green-700); border-color: color-mix(in srgb, var(--green-700) 38%, var(--line)); }
 
   /* ============================================================
      SECTIE-KOP
@@ -413,7 +420,10 @@
         <h1>Open datatools voor de <em>Omgevingswet</em></h1>
         <p class="page-head__sub">Open, publiek toegankelijke tools rond de Omgevingswet en het DSO.</p>
       </div>
-      <span class="sec-head__count" id="toolcount"></span>
+      <div class="page-head__right">
+        <span class="sec-head__count" id="toolcount"></span>
+        <a class="head-link" href="/omgevingswet/data-actualiteit/">Hoe actueel is de data?</a>
+      </div>
     </div>
     <div class="grid" id="grid"></div>
   </div>

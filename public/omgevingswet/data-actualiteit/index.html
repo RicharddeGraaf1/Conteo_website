@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hoe actueel is de data? — Conteo Consulting</title>
+<meta name="description" content="Hoe de data achter de open datatools voor de Omgevingswet wordt gesynchroniseerd: uit welke bronnen, in welke stappen, met de aantallen per run, en hoe elke site daaruit gevoed wordt." />
+<link rel="canonical" href="https://elconteo.nl/omgevingswet/data-actualiteit/" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Conteo Consulting" />
+<meta property="og:locale" content="nl_NL" />
+<meta property="og:url" content="https://elconteo.nl/omgevingswet/data-actualiteit/" />
+<meta property="og:title" content="Hoe actueel is de data?" />
+<meta property="og:description" content="Van DSO, officiële bekendmakingen en PDOK naar negen open datatools: de wekelijkse synchronisatie in beeld, met de aantallen per run." />
+<meta property="og:image" content="https://elconteo.nl/omgevingswet/og.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  /* ============================================================
+     DESIGN TOKENS — identiek aan /omgevingswet/
+     ============================================================ */
+  :root {
+    --paper:      #FAFAF7;
+    --paper-2:    #F2F1EA;
+    --blue-900:   #133A66;
+    --blue-700:   #2563A8;
+    --blue-100:   #E5EDF7;
+    --ochre:      #D4A017;
+    --ochre-soft: #F4E6BF;
+    --ochre-ink:  #7A5B0B;
+    --ink:        #1B1F1D;
+    --ink-2:      #4A524E;
+    --ink-3:      #7C837F;
+    --line:       #E4E2D8;
+    --line-2:     #D7D5C9;
+    --white:      #FFFFFF;
+    --live:       #1E7A4A;
+    --live-bg:    #E1F0E7;
+    --warn:       #B04A3A;
+
+    --maxw: 1300px;
+    --r: 8px;
+    --shadow-1: 0 1px 2px rgba(27,31,29,.05);
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--font-sans); font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, p { margin: 0; }
+  a { color: inherit; }
+  svg { display: block; max-width: 100%; }
+  button { font: inherit; color: inherit; }
+  .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: clamp(16px, 5vw, 48px); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2.5px solid var(--ochre); outline-offset: 3px; border-radius: 4px;
+  }
+  .skip {
+    position: absolute; left: -999px; top: 0; background: var(--blue-900); color: #fff;
+    padding: 10px 16px; border-radius: 0 0 8px 0; z-index: 100; font-weight: 600; font-size: 15px;
+  }
+  .skip:focus { left: 0; }
+
+  /* ============================================================
+     HEADER
+     ============================================================ */
+  .site-head {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: saturate(1.2) blur(8px);
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-head__row { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+  .brand__mark { width: 30px; height: 30px; flex: none; }
+  .brand__name { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--ink); }
+  .brand__name span { color: var(--ink-3); font-weight: 500; }
+  .back {
+    font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--white); white-space: nowrap;
+    transition: color .18s, border-color .18s;
+  }
+  .back:hover { color: var(--blue-700); border-color: color-mix(in srgb, var(--blue-700) 38%, var(--line)); }
+  .back svg { width: 14px; height: 14px; }
+  @media (max-width: 380px) { .back .label { display: none; } }
+
+  /* ============================================================
+     INTRO
+     ============================================================ */
+  .intro { padding-block: clamp(26px, 4vw, 44px) clamp(10px, 2vw, 18px); }
+  .intro__row { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px 32px; flex-wrap: wrap; }
+  .intro h1 {
+    font-size: clamp(26px, 3.4vw, 38px); line-height: 1.08; letter-spacing: -0.025em;
+    font-weight: 700; color: var(--blue-900); text-wrap: balance; max-width: 20ch;
+  }
+  .intro__sub { margin-top: 12px; font-size: 16.5px; color: var(--ink-2); max-width: 62ch; text-wrap: pretty; }
+
+  .stamp {
+    display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; align-items: center;
+    padding: 12px 16px 12px 14px; border: 1px solid var(--line); border-radius: var(--r);
+    background: var(--white); box-shadow: var(--shadow-1); min-width: 260px;
+  }
+  .stamp__led { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; background: var(--live);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--live) 16%, transparent); }
+  .stamp__k { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .02em; color: var(--ink-3); }
+  .stamp__v { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .stamp__v small { font-weight: 500; color: var(--ink-3); font-size: 13px; }
+
+  /* ============================================================
+     SECTIE-KOP
+     ============================================================ */
+  .section { padding-block: clamp(26px, 3.6vw, 48px); }
+  .section--alt { background: var(--paper-2); border-block: 1px solid var(--line); }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 18px; flex-wrap: wrap; }
+  .sec-head h2 { font-size: clamp(19px, 2.2vw, 23px); font-weight: 700; letter-spacing: -0.02em; color: var(--blue-900); }
+  .sec-head p { font-size: 15px; color: var(--ink-2); max-width: 60ch; text-wrap: pretty; }
+  .sec-head__aside { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-3); }
+
+  /* ============================================================
+     RUN-KIEZER
+     ============================================================ */
+  .runbar {
+    display: grid; grid-template-columns: auto 1fr; gap: 14px 22px; align-items: center;
+    padding: 14px 18px; margin-bottom: 14px;
+    border: 1px solid var(--line); border-radius: var(--r); background: var(--white); box-shadow: var(--shadow-1);
+  }
+  .runbar__nav { display: flex; align-items: center; gap: 10px; }
+  .runbar__btn {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--white);
+    display: grid; place-items: center; cursor: pointer; transition: background .18s, border-color .18s, color .18s;
+  }
+  .runbar__btn:hover:not(:disabled) { background: var(--blue-900); color: #fff; border-color: var(--blue-900); }
+  .runbar__btn:disabled { opacity: .35; cursor: default; }
+  .runbar__btn svg { width: 15px; height: 15px; }
+  .runbar__cur { min-width: 230px; }
+  .runbar__cur b { display: block; font-size: 16px; font-weight: 600; color: var(--blue-900); letter-spacing: -0.01em; }
+  .runbar__cur span { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .runbar__cur span.bad { color: var(--warn); }
+  .runline { position: relative; height: 44px; }
+  .runline__axis { position: absolute; left: 0; right: 0; top: 21px; height: 2px; background: var(--line-2); }
+  .runline__tick { position: absolute; top: 30px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); transform: translateX(-50%); white-space: nowrap; }
+  .runline__tick:first-of-type { transform: none; }
+  .runline__tick:last-of-type { transform: translateX(-100%); }
+  .rundot {
+    position: absolute; top: 22px; width: 14px; height: 14px; padding: 0; border-radius: 50%;
+    transform: translate(-50%, -50%); cursor: pointer;
+    background: var(--blue-100); border: 1.6px solid var(--blue-700);
+    transition: transform .18s, background .18s;
+  }
+  .rundot:hover { transform: translate(-50%, -50%) scale(1.25); }
+  .rundot.is-cur { background: var(--ochre); border-color: var(--ochre); box-shadow: 0 0 0 4px var(--ochre-soft); }
+  .rundot.is-bad { background: var(--white); border-color: var(--warn); border-style: dashed; }
+  .rundot.is-bad.is-cur { background: var(--warn); border-color: var(--warn); border-style: solid; box-shadow: 0 0 0 4px #F3DEDA; }
+  @media (max-width: 720px) { .runbar { grid-template-columns: 1fr; } }
+
+  /* ============================================================
+     DE STROOMKAART
+     ============================================================ */
+  .map-frame { border: 1px solid var(--line); border-radius: var(--r); background: var(--white); box-shadow: var(--shadow-1); overflow: hidden; }
+  .map-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .map-scroll svg { min-width: 980px; width: 100%; height: auto; }
+  .map-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap;
+    padding: 12px 18px; border-top: 1px solid var(--line); background: var(--paper);
+  }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .legend i { display: inline-block; width: 26px; height: 0; border-top: 2px solid var(--blue-700); }
+  .legend i.weekly { border-top-color: var(--ochre); }
+  .legend i.manual { border-top-style: dashed; border-top-color: var(--ochre); }
+  .legend i.replicate { border-top-width: 5px; border-top-color: var(--ochre); }
+  .legend em { font-style: normal; font-family: var(--font-mono); font-size: 10.5px; padding: 1px 6px; border-radius: 9px; background: var(--ochre-soft); color: var(--ochre-ink); }
+  .map-hint { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  @media (max-width: 720px) { .map-hint::after { content: " · schuif zijwaarts voor de hele kaart"; } }
+
+  .map-detail {
+    margin-top: 14px; min-height: 92px; display: grid; grid-template-columns: auto 1fr; gap: 14px;
+    padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r); background: var(--white);
+  }
+  .map-detail__ic { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--blue-100); color: var(--blue-900); flex: none; }
+  .map-detail__ic svg { width: 18px; height: 18px; }
+  .map-detail h3 { font-size: 16px; font-weight: 600; color: var(--blue-900); letter-spacing: -0.01em; }
+  .map-detail p { margin-top: 4px; font-size: 14.5px; color: var(--ink-2); text-wrap: pretty; max-width: 90ch; }
+  .map-detail .meta { margin-top: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .map-detail .deltas { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-2); }
+  .map-detail .deltas b { font-family: var(--font-mono); font-weight: 500; color: var(--ochre-ink); }
+  .map-detail.is-empty h3 { color: var(--ink-3); font-weight: 500; }
+
+  .node { cursor: default; transition: opacity .25s; }
+  .node rect.box { fill: var(--white); stroke: var(--line-2); stroke-width: 1; }
+  .node.src rect.box { fill: #F6F8FC; stroke: #C9D7EA; }
+  .node.hub rect.box { fill: #FFFDF5; stroke: #E6D39A; }
+  .node.prod rect.box { fill: var(--blue-900); stroke: var(--blue-900); }
+  .node text { font-family: var(--font-sans); fill: var(--ink); }
+  .node .t { font-size: 13.5px; font-weight: 600; }
+  .node .s { font-size: 11.5px; fill: var(--ink-2); }
+  .node.prod text { fill: #fff; }
+  .node.prod .s { fill: #B9CCE6; }
+  .node.prod .v { font-family: var(--font-mono); font-size: 12px; fill: #fff; }
+  .node.hub .stage { font-size: 11.5px; fill: var(--ink-2); }
+  .node.hub .stage-v { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ochre-ink); }
+  .node.hub .stage-n { font-family: var(--font-mono); font-size: 10px; fill: var(--ochre); font-weight: 500; }
+  .node .mode { font-family: var(--font-mono); font-size: 10px; }
+  .node .mode.live { fill: var(--live); }
+  .node .mode.weekly { fill: var(--ochre-ink); }
+  .node:hover rect.box, .node.is-on rect.box { stroke: var(--blue-700); stroke-width: 1.6; }
+  .node.prod:hover rect.box, .node.prod.is-on rect.box { stroke: var(--ochre); }
+  .edge { fill: none; stroke-linecap: round; transition: opacity .25s; }
+  .edge.live { stroke: var(--blue-700); stroke-width: 1.4; opacity: .55; }
+  .edge.weekly { stroke: var(--ochre); stroke-width: 1.6; opacity: .75; }
+  .edge.manual { stroke: var(--ochre); stroke-width: 1.4; stroke-dasharray: 5 5; opacity: .75; }
+  .edge.replicate { stroke: var(--ochre); stroke-width: 6; opacity: .9; }
+  .dot { pointer-events: none; transition: opacity .25s; }
+  .dot.live { fill: var(--blue-700); }
+  .dot.weekly, .dot.manual, .dot.replicate { fill: var(--ochre); }
+  .pill { pointer-events: none; transition: opacity .25s; }
+  .pill rect { fill: var(--white); stroke: var(--ochre); stroke-width: 1.2; }
+  .pill text { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ochre-ink); text-anchor: middle; }
+  .pill.zero rect { stroke: var(--line-2); } .pill.zero text { fill: var(--ink-3); }
+  .pill.neg rect { stroke: var(--warn); } .pill.neg text { fill: var(--warn); }
+  .is-dim { opacity: .13 !important; }
+  .colhead { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; fill: var(--ink-3); }
+  .colrule { stroke: var(--line); stroke-width: 1; }
+
+  /* ============================================================
+     CIJFERS VAN DE GEKOZEN RUN
+     ============================================================ */
+  .figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 900px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .fig { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--white); }
+  .fig b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--blue-900); font-variant-numeric: tabular-nums; }
+  .fig b.neg { color: var(--warn); }
+  .fig b.zero { color: var(--ink-3); }
+  .fig span { display: block; font-size: 13px; line-height: 1.4; color: var(--ink-2); margin-top: 2px; }
+  .fig small { display: block; margin-top: 4px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+  .notice { padding: 14px 16px; border: 1px dashed var(--line-2); border-radius: var(--r); font-size: 14.5px; color: var(--ink-2); background: var(--white); }
+  .notice b { color: var(--warn); font-weight: 600; }
+
+  /* ============================================================
+     TIJDVERLOOP (gantt)
+     ============================================================ */
+  .gantt-frame { border: 1px solid var(--line); border-radius: var(--r); background: var(--white); box-shadow: var(--shadow-1); overflow-x: auto; }
+  .gantt-frame svg { min-width: 760px; width: 100%; height: auto; }
+  .g-label { font-family: var(--font-sans); font-size: 12.5px; fill: var(--ink); }
+  .g-sub { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-3); }
+  .g-tick { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-3); }
+  .g-grid { stroke: var(--line); stroke-width: 1; }
+  .g-bar.laden { fill: var(--ochre); }
+  .g-bar.afleiden { fill: var(--blue-700); }
+  .g-bar.rekenen { fill: var(--blue-900); }
+  .g-bar.overig { fill: var(--ink-3); }
+  .g-bar.gefaald, .g-bar.deels { fill: var(--warn); }
+  .g-legend { display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 18px; border-top: 1px solid var(--line); background: var(--paper); font-size: 13px; color: var(--ink-2); }
+  .g-legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .g-legend i { width: 12px; height: 8px; border-radius: 2px; display: inline-block; }
+
+  /* ============================================================
+     GROEI (sparklines)
+     ============================================================ */
+  .sparks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 980px) { .sparks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .sparks { grid-template-columns: 1fr; } }
+  .spark { padding: 14px 16px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--white); box-shadow: var(--shadow-1); }
+  .spark__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .spark__head span { font-size: 13.5px; color: var(--ink-2); }
+  .spark__head b { font-size: 17px; font-weight: 700; color: var(--blue-900); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .spark svg { margin-top: 8px; width: 100%; height: auto; }
+  .spark__foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); margin-top: 4px; }
+  .sp-line { fill: none; stroke: var(--blue-700); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  .sp-area { fill: var(--blue-700); opacity: .07; }
+  .sp-cur { fill: var(--ochre); stroke: var(--white); stroke-width: 1.5; }
+  .sp-curline { stroke: var(--ochre); stroke-width: 1; stroke-dasharray: 2 3; }
+
+  /* ============================================================
+     DE STAPPEN — grootboek
+     ============================================================ */
+  .ledger { border: 1px solid var(--line); border-radius: var(--r); background: var(--white); box-shadow: var(--shadow-1); overflow: hidden; }
+  .ledger__phase { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 12px; padding: 12px 18px 8px; background: var(--paper); border-top: 1px solid var(--line); }
+  .ledger__phase:first-child { border-top: 0; }
+  .ledger__phase h3 { font-size: 13px; font-weight: 600; color: var(--blue-900); }
+  .ledger__phase span { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .step { display: grid; grid-template-columns: 34px 1fr 150px; gap: 8px 14px; align-items: start; padding: 12px 18px; border-top: 1px solid var(--line); }
+  .step__n { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); padding-top: 3px; }
+  .step__t { font-size: 15.5px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+  .step__d { font-size: 14px; color: var(--ink-2); margin-top: 2px; text-wrap: pretty; max-width: 72ch; }
+  .step__where { display: inline-block; margin-top: 6px; font-family: var(--font-mono); font-size: 11px; padding: 2px 7px; border-radius: 4px; background: var(--paper-2); color: var(--ink-2); }
+  .step__where.prod { background: var(--blue-100); color: var(--blue-900); }
+  .step__where.ai { background: var(--ochre-soft); color: var(--ochre-ink); }
+  .step__bar { padding-top: 5px; }
+  .step__bar i { display: block; height: 6px; border-radius: 3px; background: var(--ochre); min-width: 4px; }
+  .step__bar i.prod { background: var(--blue-700); }
+  .step__bar i.check { background: var(--ink-3); }
+  .step__bar span { display: block; margin-top: 5px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); }
+  @media (max-width: 640px) {
+    .step { grid-template-columns: 30px 1fr; }
+    .step__bar { grid-column: 2; padding-top: 0; }
+    .ledger__phase { grid-template-columns: 1fr; gap: 2px; }
+  }
+
+  /* ============================================================
+     PER SITE
+     ============================================================ */
+  .sites { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 980px) { .sites { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .sites { grid-template-columns: 1fr; } }
+  .site { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--white); box-shadow: var(--shadow-1); }
+  .site__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .site__name { font-size: 15px; font-weight: 600; color: var(--blue-900); text-decoration: none; letter-spacing: -0.01em; }
+  .site__name:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .badge { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .02em; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 7px; border-radius: 6px; white-space: nowrap; }
+  .badge .led { width: 6px; height: 6px; border-radius: 50%; }
+  .badge--live { background: var(--live-bg); color: var(--live); } .badge--live .led { background: var(--live); }
+  .badge--weekly { background: var(--ochre-soft); color: var(--ochre-ink); } .badge--weekly .led { background: var(--ochre); }
+  .badge--manual { background: var(--paper-2); color: var(--ink-2); } .badge--manual .led { background: var(--ink-3); }
+  .site__how { font-size: 13.5px; color: var(--ink-2); text-wrap: pretty; }
+  .site__when { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); margin-top: auto; padding-top: 4px; }
+
+  /* ============================================================
+     PRINCIPES + FOOTER
+     ============================================================ */
+  .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 3vw, 36px); }
+  @media (max-width: 820px) { .principles { grid-template-columns: 1fr; } }
+  .principle h3 { font-size: 16px; font-weight: 600; color: var(--blue-900); letter-spacing: -0.01em; }
+  .principle h3::before { content: ""; display: block; width: 22px; height: 2px; background: var(--ochre); margin-bottom: 10px; }
+  .principle p { margin-top: 6px; font-size: 14.5px; color: var(--ink-2); text-wrap: pretty; }
+  .foot { border-top: 1px solid var(--line); padding-block: 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--ink-3); }
+  .foot a { color: var(--ink-2); text-decoration: none; }
+  .foot a:hover { color: var(--blue-700); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#kaart">Direct naar de stroomkaart</a>
+
+<header class="site-head">
+  <div class="wrap site-head__row">
+    <a class="brand" href="/" aria-label="Conteo Consulting — home">
+      <svg class="brand__mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="#133A66"/>
+        <path d="M16 6 L25 11 V21 L16 26 L7 21 V11 Z" stroke="#D4A017" stroke-width="1.6" fill="none"/>
+        <path d="M16 6 V26 M7 11 L25 21 M25 11 L7 21" stroke="#5E89BE" stroke-width="1" opacity="0.8"/>
+        <circle cx="16" cy="16" r="2.4" fill="#FAFAF7"/>
+      </svg>
+      <span class="brand__name">Conteo&nbsp;Consulting <span>· datatools</span></span>
+    </a>
+    <a class="back" href="/omgevingswet/" aria-label="Terug naar het overzicht van de datatools">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      <span class="label">Alle datatools</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <!-- ================= INTRO ================= -->
+  <section class="intro">
+    <div class="wrap intro__row">
+      <div>
+        <h1>Hoe actueel is de data achter de tools?</h1>
+        <p class="intro__sub">
+          Negen open datatools, één database. Elke week halen we op wat er in het Digitaal Stelsel
+          Omgevingswet, de officiële bekendmakingen en PDOK is bijgekomen, rekenen er lokaal aan
+          en zetten het resultaat op productie. Hieronder zie je die stroom, met per run de
+          aantallen die erdoorheen gingen, en wat dat per site betekent voor de versheid van wat je ziet.
+        </p>
+      </div>
+      <div class="stamp" aria-live="polite">
+        <span class="stamp__led" aria-hidden="true"></span>
+        <span class="stamp__k">laatste synchronisatie</span>
+        <span class="stamp__v" id="stamp-v">—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STROOMKAART ================= -->
+  <section class="section" id="kaart">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2>Van bron tot site</h2>
+          <p>Vijf bronnen, één werkbank, één productiedatabase, negen sites. Kies een run om te zien wat er die keer doorheen ging; wijs een onderdeel aan voor de details.</p>
+        </div>
+      </div>
+
+      <div class="runbar" id="runbar">
+        <div class="runbar__nav">
+          <button class="runbar__btn" id="run-prev" aria-label="Vorige run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <div class="runbar__cur"><b id="run-title">—</b><span id="run-sub"></span></div>
+          <button class="runbar__btn" id="run-next" aria-label="Volgende run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+        <div class="runline" id="runline" role="group" aria-label="Alle runs op een tijdlijn"></div>
+      </div>
+
+      <figure class="map-frame" style="margin:0">
+        <div class="map-scroll" id="map-scroll"></div>
+        <figcaption class="map-foot">
+          <div class="legend" aria-label="Legenda">
+            <span><i></i>bij elk bezoek, via de API</span>
+            <span><i class="replicate"></i>wekelijkse sync: rijen naar productie</span>
+            <span><i class="weekly"></i>wekelijks, automatisch gebakken</span>
+            <span><i class="manual"></i>na elke sync, handmatig gebakken</span>
+            <span><em>+24</em>verschil met de vorige run</span>
+          </div>
+          <span class="map-hint">beweeg of tab over de kaart</span>
+        </figcaption>
+      </figure>
+      <div class="map-detail is-empty" id="map-detail">
+        <span class="map-detail__ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 12h16M12 4v16"/></svg>
+        </span>
+        <div>
+          <h3 id="md-title">Wijs een bron, de werkbank, productie of een site aan</h3>
+          <p id="md-text">De lijnen laten zien welke data waarheen stroomt. Blauw beweegt continu: die sites vragen de database bij elk bezoek. Oker beweegt in wekelijkse golven. De labels op de lijnen zijn de aantallen van de gekozen run.</p>
+          <ul class="deltas" id="md-deltas"></ul>
+          <div class="meta" id="md-meta"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CIJFERS VAN DEZE RUN ================= -->
+  <section class="section section--alt" id="cijfers">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="figures-title">Deze run in cijfers</h2>
+          <p>Wat er bijkwam ten opzichte van de vorige voltooide run, met de totaalstand daarna. Een min betekent opschoning: verdrongen of ingetrokken versies die zijn weggehaald.</p>
+        </div>
+        <span class="sec-head__aside" id="figures-aside"></span>
+      </div>
+      <div id="figures"></div>
+    </div>
+  </section>
+
+  <!-- ================= TIJDVERLOOP ================= -->
+  <section class="section" id="verloop">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2>Het verloop van deze run</h2>
+          <p>Elke fase zoals hij werkelijk liep, op de klok. Laden is goedkoop; afleiden en rekenen vullen de nacht. Fasen kunnen elkaar overlappen als ze parallel draaien.</p>
+        </div>
+        <span class="sec-head__aside" id="gantt-aside"></span>
+      </div>
+      <div class="gantt-frame">
+        <div id="gantt"></div>
+        <div class="g-legend">
+          <span><i style="background:var(--ochre)"></i>laden uit de bronnen</span>
+          <span><i style="background:var(--blue-700)"></i>afleiden</span>
+          <span><i style="background:var(--blue-900)"></i>rekenen en indexeren</span>
+          <span><i style="background:var(--ink-3)"></i>controles en statistieken</span>
+          <span><i style="background:var(--warn)"></i>fase met fouten</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GROEI ================= -->
+  <section class="section section--alt" id="groei">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2>Groei over alle runs</h2>
+          <p>De totaalstand per bron na elke voltooide synchronisatie. De okerstip is de gekozen run.</p>
+        </div>
+        <span class="sec-head__aside" id="sparks-aside"></span>
+      </div>
+      <div class="sparks" id="sparks"></div>
+    </div>
+  </section>
+
+  <!-- ================= STAPPEN ================= -->
+  <section class="section" id="stappen">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2>Eén synchronisatie, in dertien stappen</h2>
+          <p>Het draaiboek achter elke run. De balk toont een kenmerkende duur; het echte verloop van een run staat hierboven.</p>
+        </div>
+        <span class="sec-head__aside">balk = duur, wortelschaal</span>
+      </div>
+      <div class="ledger" id="ledger"></div>
+    </div>
+  </section>
+
+  <!-- ================= PER SITE ================= -->
+  <section class="section section--alt" id="sites">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2>Wat dat per site betekent</h2>
+          <p>Drie regimes. Live sites tonen altijd de stand van de laatste sync. Gebakken sites worden opnieuw gebouwd, automatisch of met de hand, en dragen hun eigen datum.</p>
+        </div>
+      </div>
+      <div class="sites" id="sites-grid"></div>
+    </div>
+  </section>
+
+  <!-- ================= PRINCIPES ================= -->
+  <section class="section" id="principes">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>Drie afspraken die de data betrouwbaar houden</h2></div></div>
+      <div class="principles">
+        <div class="principle">
+          <h3>Eerst kijken, dan pas schrijven</h3>
+          <p>Elke sync begint met een voorvertoning: hoeveel regelingen zijn nieuw, welke versies worden verdrongen, wat is verdwenen? Pas als die cijfers plausibel zijn, wordt er geladen. Een run zonder foutmeldingen is niet hetzelfde als een run die compleet is.</p>
+        </div>
+        <div class="principle">
+          <h3>Productie krijgt gegevens, geen loaders</h3>
+          <p>De bronnen worden één keer bevraagd, op de werkbank. Productie ontvangt de nieuwe rijen en bouwt alleen de afgeleide tabellen zelf opnieuw. Zo kunnen werkbank en productie niet uiteenlopen, en kan een haperende bron productie nooit half gevuld achterlaten.</p>
+        </div>
+        <div class="principle">
+          <h3>Controleren op groei, niet op fouten</h3>
+          <p>Na de sync vergelijkt een regressiecheck per bron het aantal rijen vóór en ná. Daalt een bron, of groeit hij drie runs op rij niet, dan is dat een signaal, ook als geen enkele stap een fout meldde. De aantallen op deze pagina komen uit diezelfde registratie.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <div>© <span id="yr"></span> Conteo Consulting · <a href="/omgevingswet/">Open datatools voor de Omgevingswet</a></div>
+  <div><a href="mailto:richard.de.graaf@conteo-consulting.nl">richard.de.graaf@conteo-consulting.nl</a></div>
+</footer>
+
+<script>
+/* =====================================================================
+   VASTE GEGEVENS — de kaart, de stappen en de sites.
+   De aantallen per run komen uit runs.json (gegenereerd door
+   dso-loader/scripts/export_data_actualiteit.py na elke sync).
+   ===================================================================== */
+
+const NODES = [
+  { id: "ozon", col: "src", title: "DSO: omgevingsdocumenten", sub: "tekst, annotaties, geometrie",
+    detail: "De vastgestelde omgevingsdocumenten van Rijk, provincies, waterschappen en gemeenten, via de Presenteren-API van het Digitaal Stelsel Omgevingswet. Per document komen de tekst, de annotaties (activiteiten, locaties, normen) en de geometrie binnen. Wekelijks wordt de volledige lijst vergeleken met wat al geladen is; alleen nieuwe versies komen over. Ook ontwerpen, besluitversies en de afwijkvergunningen uit het DSO worden bijgehouden.",
+    meta: "service.omgevingswet.overheid.nl · wekelijks" },
+  { id: "rtr", col: "src", title: "DSO: toepasbare regels", sub: "activiteiten, beslisbomen",
+    detail: "De activiteiten die elk bestuursorgaan heeft geregistreerd en de beslisbomen (DMN) achter de vergunningcheck van het Omgevingsloket. Per bestand wordt alleen opgehaald wat sinds de vorige keer is gewijzigd; dat bracht deze stap van ruim vijf uur terug naar veertig minuten.",
+    meta: "RTR en STTR · wekelijks · 343 bestuursorganen" },
+  { id: "koop", col: "src", title: "Officiële bekendmakingen", sub: "vergunningkennisgevingen",
+    detail: "Elke kennisgeving over een omgevingsvergunning die overheden publiceren op officielebekendmakingen.nl, opgehaald via de zoekkoppeling van KOOP. Wekelijks komen de nieuwe binnen; daarna krijgt elke kennisgeving de volledige publicatie, een adres en een plek op de kaart.",
+    meta: "repository.overheid.nl · wekelijks" },
+  { id: "pdok", col: "src", title: "PDOK en Informatiehuis Ruimte", sub: "bestemmingsplannen (Wro)",
+    detail: "De bestemmingsplannen van vóór de Omgevingswet, die tot uiterlijk 2032 naast het omgevingsplan blijven gelden. De planobjecten komen als landelijke download van PDOK, de plantekst via de API van het Informatiehuis Ruimte. Dit spoor loopt los van de wekelijkse sync en wordt op indicatie ververst; de stand verandert dus meestal niet.",
+    meta: "service.pdok.nl · ruimte.omgevingswet.overheid.nl · op indicatie" },
+  { id: "mer", col: "src", title: "Commissie m.e.r.", sub: "milieueffectrapportages, bekendmakingen",
+    detail: "Milieueffectrapportages en hun procesbesluiten, samengebracht uit twee kanalen: de projectpagina's en adviezen van de Commissie m.e.r., en de m.e.r.-gerelateerde kennisgevingen in de officiële bekendmakingen.",
+    meta: "commissiemer.nl · repository.overheid.nl · bij elke sync" },
+
+  { id: "hub", col: "hub", title: "Werkbank", sub: "lokale PostGIS-database",
+    detail: "Een PostGIS-database op een eigen machine, de enige plek waar bronnen worden bevraagd. Hier wordt geladen, afgeleid en gerekend: geometrie opgeknipt en vereenvoudigd voor de kaart, teksten gekoppeld aan de objecten waar ze over gaan, een vectorindex gebouwd met een lokaal taalmodel, en met Claude de doorwerkingsoordelen en begrijpelijke hertalingen gemaakt. Pas als alles klopt, gaan de rijen naar productie.",
+    meta: "Docker · PostgreSQL 16 + PostGIS" },
+
+  { id: "prod", col: "prod", title: "Productie", sub: "PostGIS en API op Railway",
+    detail: "De database waar de sites uit lezen, met een REST-API ervoor. Krijgt elke week de nieuwe rijen gekopieerd en bouwt de afgeleide tabellen (kaartlagen, koppelingen, gezondheidsmetingen) zelf opnieuw. Er draaien geen loaders tegen productie. Elke live site praat met de API via een eigen proxy op het eigen domein, zodat de sleutel nooit in de browser staat.",
+    meta: "Railway · PostgreSQL 17 + PostGIS · FastAPI" },
+
+  { id: "odr", col: "site", title: "Omgevingsdocumentenregister", mode: "live", url: "https://omgevingsdocumentenregister.nl",
+    detail: "Zoekt in de productiedatabase bij elk bezoek: elk omgevingsdocument en nog geldend bestemmingsplan. Toont daarnaast de oordelen van vier zustersites (ponsenkaart, instructieregels, implementatiemonitor, annotatieconformiteit) via hun gepubliceerde feeds, met de peildatum erbij.",
+    meta: "live via de API · plus feeds van vier zustersites" },
+  { id: "viewer", col: "site", title: "OCD-viewer", mode: "live", url: "https://ocd-viewer.nl",
+    detail: "Van locatie naar de geldende regels: kaartlagen, documenten en de AI-samenvatting komen bij elk bezoek uit productie. Heeft een eigen pagina met de laadstatus per bron, rechtstreeks uit de database.",
+    meta: "live via de API · laadstatus per bron op ocd-viewer.nl/data" },
+  { id: "ovr", col: "site", title: "Omgevingsvergunningenregister", mode: "live", url: "https://omgevingsvergunningenregister.nl",
+    detail: "Doorzoekt alle vergunningkennisgevingen van Nederland, bij elk bezoek uit productie. De nieuwe kennisgevingen van de week staan erin zodra de sync is afgerond.",
+    meta: "live via de API" },
+  { id: "bot", col: "site", title: "Omgevingsbot", mode: "live", url: "https://omgevingsbot.nl",
+    detail: "Beantwoordt vragen over de regels op een locatie. Haalt de regelteksten en de vectorindex bij elke vraag uit productie en laat een taalmodel het antwoord formuleren op basis van die teksten.",
+    meta: "live via de API · taalmodel voor het antwoord" },
+  { id: "pons", col: "site", title: "Ponsenkaart", mode: "live", url: "https://ponsenkaart.nl",
+    detail: "Hoe ver elke gemeente is met de overgang van bestemmingsplannen naar het omgevingsplan. Leest de gemeentestatistieken bij elk bezoek uit productie; die statistieken worden aan het eind van elke sync opnieuw berekend.",
+    meta: "live via de API" },
+  { id: "irm", col: "site", title: "Monitor instructieregels", mode: "weekly", url: "https://instructieregels.nl",
+    detail: "In hoeveel omgevingsplannen de instructieregels van Rijk en provincies terug te vinden zijn. Wordt elke maandagochtend automatisch opnieuw gebouwd uit de productiedatabase en gepubliceerd. De doorwerkingsoordelen zelf komen uit de werkbank, waar een taalmodel ze na elke sync beoordeelt.",
+    meta: "gebakken · elke maandag 06:00 UTC via GitHub Actions · datum in de site" },
+  { id: "dim", col: "site", title: "DSO Implementatiemonitor", mode: "weekly", url: "https://dso-implementatiemonitor.nl",
+    detail: "De indicatoren van de Monitor Werking Omgevingswet, actueel gemeten. De implementatiescore wordt elke maandagochtend automatisch herberekend uit de gepubliceerde feeds van de zustersites; de historische reeksen komen rechtstreeks uit de werkbank.",
+    meta: "gebakken · elke maandag 05:12 UTC via GitHub Actions · peildatum in de site" },
+  { id: "aco", col: "site", title: "Annotatieconformiteit", mode: "manual", url: "https://annotatieconformiteit.nl",
+    detail: "Hoe goed omgevingsdocumenten voldoen aan de DSO-standaarden, gescoord op 45 richtlijnen. Wordt na elke sync opnieuw doorgerekend en gepubliceerd. De site toont zowel de meetdatum als de peildatum van de brondata.",
+    meta: "gebakken · na elke sync, handmatig · meetdatum en peildatum in de site" },
+  { id: "merr", col: "site", title: "MER-register", mode: "manual", url: "https://mer-register.nl",
+    detail: "Milieueffectrapportages en hun procesbesluiten. Wordt gebouwd uit de eigen oogst van de Commissie m.e.r. en de bekendmakingen, en na elke oogst opnieuw gepubliceerd.",
+    meta: "gebakken · na elke oogst, handmatig" }
+];
+
+const EDGES = [
+  { from: "ozon", to: "hub", kind: "weekly" },
+  { from: "rtr",  to: "hub", kind: "weekly" },
+  { from: "koop", to: "hub", kind: "weekly" },
+  { from: "pdok", to: "hub", kind: "manual" },
+  { from: "mer",  to: "hub", kind: "weekly" },
+  { from: "hub",  to: "prod", kind: "replicate" },
+  { from: "prod", to: "odr",    kind: "live" },
+  { from: "prod", to: "viewer", kind: "live" },
+  { from: "prod", to: "ovr",    kind: "live" },
+  { from: "prod", to: "bot",    kind: "live" },
+  { from: "prod", to: "pons",   kind: "live" },
+  { from: "prod", to: "irm",    kind: "weekly" },
+  { from: "prod", to: "dim",    kind: "weekly" },
+  { from: "hub",  to: "aco",    kind: "manual" },
+  { from: "hub",  to: "merr",   kind: "manual" }
+];
+
+const STEPS = [
+  { phase: "Kijken", phaseNote: "read-only", items: [
+    { t: "Vooruitkijken", d: "Wat is er sinds vorige week bijgekomen in het DSO? Hoeveel regelingen zijn nieuw, welke versies worden verdrongen, welke zijn verdwenen? Pas bij plausibele cijfers wordt er geladen.", where: "werkbank", min: 1, bar: "check" }
+  ]},
+  { phase: "Laden op de werkbank", phaseNote: "alleen wat nieuw is", items: [
+    { t: "Omgevingsdocumenten laden", d: "Nieuwe en gewijzigde regelingen: tekst, annotaties en geometrie. Al geladen versies worden in een milliseconde herkend en overgeslagen.", where: "werkbank", min: 22, bar: "lokaal" },
+    { t: "Toepasbare regels laden", d: "De activiteiten en beslisbomen van alle 343 bestuursorganen; per bestand alleen wat sinds de vorige keer is gewijzigd.", where: "werkbank", min: 40, bar: "lokaal" },
+    { t: "Vergunningkennisgevingen laden", d: "De nieuwe kennisgevingen uit de officiële bekendmakingen, elk verrijkt met de volledige publicatie, een adres en een plek op de kaart.", where: "werkbank", min: 116, bar: "lokaal" },
+    { t: "Afleiden", d: "Geometrie opknippen en vereenvoudigen voor de kaart, teksten koppelen aan de objecten waar ze over gaan, gezondheidsmetingen per bronhouder opnieuw berekenen.", where: "werkbank", min: 90, bar: "lokaal" },
+    { t: "Aankomende wijzigingen", d: "Ontwerpen en besluitversies die een bekende regeling gaan wijzigen, zodat de sites kunnen laten zien wat eraan komt.", where: "werkbank", min: 40, bar: "lokaal" },
+    { t: "Oude versies markeren", d: "Verdrongen en ingetrokken regelingen op inactief zetten, zodat oude en nieuwe versie niet naast elkaar in de zoekresultaten staan.", where: "werkbank", min: 1, bar: "lokaal" }
+  ]},
+  { phase: "Naar productie", phaseNote: "rijen kopiëren, afgeleide tabellen herbouwen", items: [
+    { t: "Repliceren", d: "De nieuw geladen rijen gaan over de lijn naar Railway. De zware afgeleide tabellen (kaartlagen, koppelingen) worden daar opnieuw gebouwd in plaats van verstuurd.", where: "productie", min: 45, bar: "prod" },
+    { t: "Vergunningen en toepasbare regels pushen", d: "De delta van de week, met controle op de aantallen aan beide kanten.", where: "productie", min: 20, bar: "prod" }
+  ]},
+  { phase: "Betekenis toevoegen", phaseNote: "lokale GPU en Claude", items: [
+    { t: "Vectorindex en onderwerpen", d: "Nieuwe tekstfragmenten krijgen een embedding van een lokaal taalmodel en een onderwerp, zodat de zoekfuncties en de Omgevingsbot ze semantisch kunnen vinden.", where: "ai", min: 15, bar: "lokaal" },
+    { t: "Oordelen en hertalingen", d: "Claude beoordeelt voor instructieregels.nl of nieuwe omgevingsplanregels een instructieregel opnemen, en schrijft begrijpelijke varianten van nieuwe regelteksten. Dit is het langste deel van de nacht.", where: "ai", min: 240, bar: "lokaal" }
+  ]},
+  { phase: "Controleren en publiceren", phaseNote: "", items: [
+    { t: "Controleren", d: "De voorvertoning opnieuw draaien: er mag niets meer te laden zijn. Een regressiecheck vergelijkt per bron de aantallen vóór en ná de run.", where: "beide", min: 20, bar: "check" },
+    { t: "Sites bijwerken", d: "De gebakken sites opnieuw bouwen en publiceren, de caches van de live sites legen, het rapport schrijven.", where: "sites", min: 15, bar: "check" }
+  ]}
+];
+
+/* Welke fase-bron in welke kleurgroep valt (tijdverloop). */
+const FASE_GROEP = {
+  "ozon-regelingen": "laden", "ozon-ontwerpen": "laden", "ozon-besluitversies": "laden", "ozon-afwijkvergunningen": "laden",
+  "rtr-toepasbare-regels": "laden", "koop-sru-vergunningen": "laden", "obk-vergunningen-inhoud": "laden",
+  "mer-events": "laden", "mer-commissie": "laden", "pdok-bestemmingsplannen": "laden", "pdok-structuurvisies": "laden",
+  "ihr-plannen": "laden", "ihr-planvoorraad": "laden", "pdok-gemeentegrenzen": "laden",
+  "locatie-subdiv": "afleiden", "locatie-generalisatie": "afleiden", "drieslag-mv": "afleiden", "indeling": "afleiden",
+  "v2a-tekst-embedding": "rekenen", "v2a-chunk-annotatie": "rekenen", "v2a-chunk-categorie": "rekenen"
+};
+
+/* De tegels per run, in deze volgorde. */
+const FIG_KEYS = ["ozon-regelingen", "koop-sru-vergunningen", "rtr-toepasbare-regels", "ozon-ontwerpen",
+                  "ozon-besluitversies", "ozon-afwijkvergunningen", "mer-commissie", "v2a-tekst-embedding"];
+const SPARK_KEYS = ["ozon-regelingen", "koop-sru-vergunningen", "rtr-toepasbare-regels", "ozon-ontwerpen",
+                    "ozon-afwijkvergunningen", "mer-commissie", "v2a-tekst-embedding", "pdok-bestemmingsplannen"];
+
+/* =====================================================================
+   HULPFUNCTIES
+   ===================================================================== */
+const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TZ = "Europe/Amsterdam";
+const MAANDEN = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+function fmtN(n) { return n == null ? "—" : Number(n).toLocaleString("nl-NL"); }
+function fmtSigned(n) { if (n == null) return "—"; if (n === 0) return "±0"; return (n > 0 ? "+" : "−") + fmtN(Math.abs(n)); }
+function parts(iso) {
+  const d = new Date(iso);
+  const f = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+  const p = Object.fromEntries(f.formatToParts(d).map(x => [x.type, x.value]));
+  return { d: Number(p.day), m: Number(p.month), y: p.year, hm: `${p.hour}:${p.minute}` };
+}
+function fmtDate(iso) { if (!iso) return "—"; const p = parts(iso); return `${p.d} ${MAANDEN[p.m - 1]} ${p.y}`; }
+function fmtDateShort(iso) { const p = parts(iso); return `${p.d}/${p.m}`; }
+function fmtTime(iso) { return iso ? parts(iso).hm : ""; }
+function fmtDur(s) {
+  if (s == null) return "—";
+  const m = Math.round(s / 60), h = Math.floor(m / 60);
+  if (s < 60) return `${s} s`;
+  return h ? `${h} u ${String(m % 60).padStart(2, "0")} min` : `${m} min`;
+}
+function minLabel(m) { if (m < 60) return `${m} min`; const h = Math.floor(m / 60), r = m % 60; return r ? `${h} u ${r} min` : `${h} u`; }
+
+/* =====================================================================
+   STROOMKAART
+   ===================================================================== */
+function layout() {
+  const W = 1180;
+  const cols = { src: { x: 16, w: 236 }, hub: { x: 356, w: 250 }, prod: { x: 680, w: 180 }, site: { x: 940, w: 226 } };
+  const sites = NODES.filter(n => n.col === "site"), srcs = NODES.filter(n => n.col === "src");
+  const top = 42, siteH = 40, siteGap = 14, srcH = 56, srcGap = 24;
+  const sitesTotal = sites.length * siteH + (sites.length - 1) * siteGap;
+  const H = top + sitesTotal + 28, midY = top + sitesTotal / 2;
+  const pos = {};
+  sites.forEach((n, i) => { pos[n.id] = { x: cols.site.x, y: top + i * (siteH + siteGap), w: cols.site.w, h: siteH }; });
+  const srcTotal = srcs.length * srcH + (srcs.length - 1) * srcGap;
+  srcs.forEach((n, i) => { pos[n.id] = { x: cols.src.x, y: midY - srcTotal / 2 + i * (srcH + srcGap), w: cols.src.w, h: srcH }; });
+  pos.hub  = { x: cols.hub.x,  y: midY - 150, w: cols.hub.w,  h: 300 };
+  pos.prod = { x: cols.prod.x, y: midY - 66,  w: cols.prod.w, h: 132 };
+  return { W, H, pos, cols };
+}
+
+function edgePath(a, b, kind, idx) {
+  let x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2;
+  if (a.w === 250 && kind === "manual") y1 = a.y + a.h - 24 - idx * 18;
+  if (b.w === 250) y2 = b.y + 36 + idx * ((b.h - 72) / 4);
+  const dx = Math.max(60, (x2 - x1) * 0.5);
+  return `M${x1} ${y1} C${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+}
+
+function nodeSVG(n, p) {
+  let inner = "";
+  if (n.col === "src") {
+    inner = `<text class="t" x="14" y="24">${esc(n.title)}</text><text class="s" x="14" y="42">${esc(n.sub)}</text>`;
+  } else if (n.col === "hub") {
+    const stages = [["laden", "nieuwe rijen uit de bronnen"], ["afleiden", "kaartlagen, koppelingen"], ["rekenen", "vectorindex, oordelen, hertaling"], ["controleren", "voorvertoning, regressiecheck"]];
+    inner = `<text class="t" x="18" y="30">${esc(n.title)}</text><text class="s" x="18" y="48">${esc(n.sub)}</text>
+      <line x1="18" y1="62" x2="${p.w - 18}" y2="62" class="colrule"/>`;
+    stages.forEach(([k, v], i) => {
+      const y = 90 + i * 54;
+      inner += `<text class="stage-n" x="18" y="${y}">${String(i + 1).padStart(2, "0")}</text>
+                <text class="stage" x="44" y="${y}" style="font-weight:600;fill:var(--ink)">${esc(k)}</text>
+                <text class="stage" x="44" y="${y + 16}">${esc(v)}</text>
+                <text class="stage-v" x="44" y="${y + 31}" id="hub-v${i}"></text>`;
+    });
+  } else if (n.col === "prod") {
+    inner = `<text class="t" x="18" y="30">${esc(n.title)}</text><text class="s" x="18" y="48">${esc(n.sub)}</text>
+      <text class="v" x="18" y="76" id="prod-v0"></text><text class="s" x="18" y="90">regelingen</text>
+      <text class="v" x="18" y="108" id="prod-v1"></text><text class="s" x="18" y="122">vergunningkennisgevingen</text>
+      <circle cx="${p.w - 22}" cy="24" r="4" fill="#D4A017"/>`;
+  } else {
+    const modeTxt = { live: "live", weekly: "wekelijks", manual: "handmatig" }[n.mode];
+    inner = `<text class="t" x="14" y="18" style="font-size:12.5px">${esc(n.title)}</text><text class="mode ${n.mode}" x="14" y="32">${modeTxt}</text>`;
+  }
+  return `<g class="node ${n.col}" data-id="${n.id}" tabindex="0" role="button" aria-label="${esc(n.title)}" transform="translate(${p.x},${p.y})">
+    <rect class="box" width="${p.w}" height="${p.h}" rx="7"/>${inner}</g>`;
+}
+
+function dotsSVG(e, i) {
+  if (reduced) return "";
+  const cfg = { live: { n: 3, dur: 4.5, r: 2.6 }, weekly: { n: 2, dur: 9, r: 3 }, manual: { n: 1, dur: 11, r: 3 }, replicate: { n: 4, dur: 5, r: 4.2 } }[e.kind];
+  let s = "";
+  for (let k = 0; k < cfg.n; k++) {
+    const begin = -(k * cfg.dur / cfg.n + (i % 5) * 0.37);
+    s += `<circle class="dot ${e.kind}" r="${cfg.r}" data-edge="${i}"><animateMotion dur="${cfg.dur}s" begin="${begin}s" repeatCount="indefinite" calcMode="spline" keyTimes="0;1" keySplines="0.4 0 0.6 1"><mpath href="#e${i}"/></animateMotion></circle>`;
+  }
+  return s;
+}
+
+function renderMap() {
+  const L = layout();
+  const heads = [["Bronnen", L.cols.src], ["Werkbank", L.cols.hub], ["Productie", L.cols.prod], ["Sites", L.cols.site]];
+  let s = `<svg viewBox="0 0 ${L.W} ${L.H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stroomkaart: vijf bronnen voeden de werkbank, de werkbank repliceert naar productie, productie voedt negen sites">`;
+  heads.forEach(([t, c]) => { s += `<text class="colhead" x="${c.x}" y="22">${t.toUpperCase()}</text><line class="colrule" x1="${c.x}" y1="28" x2="${c.x + c.w}" y2="28"/>`; });
+  const counters = { hubIn: 0, hubManual: 0 };
+  s += `<g class="edges">`;
+  EDGES.forEach((e, i) => {
+    const a = L.pos[e.from], b = L.pos[e.to];
+    let idx = 0;
+    if (e.to === "hub") idx = counters.hubIn++;
+    if (e.from === "hub" && e.kind === "manual") idx = counters.hubManual++;
+    s += `<path id="e${i}" class="edge ${e.kind}" data-from="${e.from}" data-to="${e.to}" d="${edgePath(a, b, e.kind, idx)}"/>`;
+  });
+  s += `</g><g class="dots">`;
+  EDGES.forEach((e, i) => { s += dotsSVG(e, i); });
+  s += `</g><g class="nodes">`;
+  NODES.forEach(n => { s += nodeSVG(n, L.pos[n.id]); });
+  s += `</g><g class="pills">`;
+  EDGES.forEach((e, i) => {
+    if (e.to !== "hub") return;
+    s += `<g class="pill" data-edge="${i}" data-src="${e.from}"><rect rx="9" height="18"/><text dy="12.5"></text></g>`;
+  });
+  s += `</g></svg>`;
+  document.getElementById("map-scroll").innerHTML = s;
+  placePills();
+  wireMap();
+}
+
+function placePills() {
+  const svg = document.querySelector("#map-scroll svg");
+  svg.querySelectorAll(".pill").forEach(g => {
+    const path = svg.querySelector(`#e${g.dataset.edge}`);
+    const pt = path.getPointAtLength(path.getTotalLength() * 0.5);
+    g.setAttribute("transform", `translate(${pt.x.toFixed(1)},${(pt.y - 9).toFixed(1)})`);
+  });
+}
+
+function setPill(g, text, cls) {
+  const w = Math.max(30, text.length * 6.6 + 14);
+  const r = g.querySelector("rect"), t = g.querySelector("text");
+  r.setAttribute("width", w); r.setAttribute("x", -w / 2);
+  t.textContent = text;
+  g.classList.remove("zero", "neg");
+  if (cls) g.classList.add(cls);
+  g.style.display = text ? "" : "none";
+}
+
+const ICONS = {
+  src:  '<path d="M4 7.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 7.5v9c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-9"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>',
+  hub:  '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/>',
+  prod: '<rect x="3" y="5" width="18" height="6" rx="1.5"/><rect x="3" y="13" width="18" height="6" rx="1.5"/><path d="M7 8h.01M7 16h.01"/>',
+  site: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8"/>'
+};
+
+function wireMap() {
+  const svg = document.querySelector("#map-scroll svg");
+  const detail = document.getElementById("map-detail");
+  const nodes = [...svg.querySelectorAll(".node")], edges = [...svg.querySelectorAll(".edge")];
+  const dots = [...svg.querySelectorAll(".dot")], pills = [...svg.querySelectorAll(".pill")];
+  const ic = detail.querySelector(".map-detail__ic");
+  function connected(id) {
+    const keep = new Set([id]), eKeep = new Set();
+    EDGES.forEach((e, i) => { if (e.from === id || e.to === id) { eKeep.add(i); keep.add(e.from); keep.add(e.to); } });
+    return { keep, eKeep };
+  }
+  function focus(id) {
+    const { keep, eKeep } = connected(id);
+    nodes.forEach(g => { g.classList.toggle("is-dim", !keep.has(g.dataset.id)); g.classList.toggle("is-on", g.dataset.id === id); });
+    edges.forEach((p, i) => p.classList.toggle("is-dim", !eKeep.has(i)));
+    dots.forEach(c => c.classList.toggle("is-dim", !eKeep.has(Number(c.dataset.edge))));
+    pills.forEach(c => c.classList.toggle("is-dim", !eKeep.has(Number(c.dataset.edge))));
+    const n = byId[id];
+    detail.classList.remove("is-empty");
+    document.getElementById("md-title").textContent = n.title + (n.sub ? " — " + n.sub : "");
+    document.getElementById("md-text").textContent = n.detail;
+    document.getElementById("md-meta").textContent = n.meta || "";
+    document.getElementById("md-deltas").innerHTML = deltaListHTML(id);
+    ic.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[n.col]}</svg>`;
+  }
+  function clear() {
+    nodes.forEach(g => g.classList.remove("is-dim", "is-on"));
+    [...edges, ...dots, ...pills].forEach(x => x.classList.remove("is-dim"));
+  }
+  nodes.forEach(g => {
+    g.addEventListener("mouseenter", () => focus(g.dataset.id));
+    g.addEventListener("focus", () => focus(g.dataset.id));
+    g.addEventListener("mouseleave", clear);
+    g.addEventListener("blur", clear);
+    const n = byId[g.dataset.id];
+    if (n.url) {
+      g.style.cursor = "pointer";
+      g.addEventListener("click", () => window.open(n.url, "_blank", "noopener"));
+      g.addEventListener("keydown", ev => { if (ev.key === "Enter") window.open(n.url, "_blank", "noopener"); });
+    }
+  });
+}
+
+/* =====================================================================
+   RUNS — selectie en alles wat ervan afhangt
+   ===================================================================== */
+let DATA = null, RUNS = [], SEL = -1;   // RUNS = kiesbare runs (ok + afgebroken), SEL = index daarin
+
+function deltaListHTML(nodeId) {
+  const r = RUNS[SEL];
+  if (!DATA || !r || !r.totalen) return "";
+  const keys = Object.keys(DATA.bronnen).filter(k => DATA.bronnen[k].knoop === nodeId);
+  if (!keys.length) return "";
+  return keys.map(k => {
+    const d = r.delta ? r.delta[k] : null;
+    return `<li><b>${d == null ? "—" : fmtSigned(d)}</b> ${esc(DATA.bronnen[k].label)} <span style="color:var(--ink-3)">(${fmtN(r.totalen[k])})</span></li>`;
+  }).join("");
+}
+
+function pillClass(d) { return d == null ? "zero" : d < 0 ? "neg" : d === 0 ? "zero" : ""; }
+
+function applyRunToMap(r) {
+  const svg = document.querySelector("#map-scroll svg");
+  svg.querySelectorAll(".pill").forEach(g => {
+    const key = Object.keys(DATA.bronnen).find(k => DATA.bronnen[k].knoop === g.dataset.src && DATA.bronnen[k].primair);
+    if (!r.totalen || !r.delta || !key) { setPill(g, r.totalen ? "" : "afgebroken", "neg"); return; }
+    const d = r.delta[key];
+    setPill(g, d == null ? "" : fmtSigned(d), pillClass(d));
+  });
+  const d = r.delta || {}, f = r.fasen || [];
+  const subdiv = f.find(x => x.bron === "locatie-subdiv");
+  const embed = f.filter(x => x.bron === "v2a-tekst-embedding").reduce((a, x) => a + (x.verwerkt || 0), 0);
+  const hv = [
+    r.totalen ? `${fmtSigned(d["ozon-regelingen"])} documenten · ${fmtSigned(d["koop-sru-vergunningen"])} kennisgevingen` : "afgebroken",
+    subdiv ? `geometrie van ${fmtN(subdiv.verwerkt)} bronhouders` : "",
+    embed ? `${fmtN(embed)} tekstfragmenten geïndexeerd` : (r.totalen ? "geen nieuwe fragmenten" : ""),
+    r.totalen ? `${fmtN(r.fouten)} fouten` : ""
+  ];
+  hv.forEach((t, i) => { document.getElementById("hub-v" + i).textContent = t; });
+  document.getElementById("prod-v0").textContent = r.totalen ? fmtN(r.totalen["ozon-regelingen"]) : "—";
+  document.getElementById("prod-v1").textContent = r.totalen ? fmtN(r.totalen["koop-sru-vergunningen"]) : "—";
+}
+
+function renderRunbar() {
+  const line = document.getElementById("runline");
+  const t0 = new Date(RUNS[0].gestart).getTime(), t1 = new Date(RUNS[RUNS.length - 1].gestart).getTime();
+  const span = Math.max(1, t1 - t0);
+  let s = `<div class="runline__axis" aria-hidden="true"></div>`;
+  s += `<span class="runline__tick" style="left:0">${fmtDateShort(RUNS[0].gestart)}</span>`;
+  s += `<span class="runline__tick" style="left:100%">${fmtDateShort(RUNS[RUNS.length - 1].gestart)}</span>`;
+  RUNS.forEach((r, i) => {
+    const x = ((new Date(r.gestart).getTime() - t0) / span) * 96 + 2;
+    const bad = r.status !== "ok";
+    s += `<button class="rundot${bad ? " is-bad" : ""}" style="left:${x.toFixed(2)}%" data-i="${i}" title="${esc(r.label)} · ${fmtDate(r.gestart)}" aria-label="Run ${r.run}, ${fmtDate(r.gestart)}${bad ? ", afgebroken" : ""}"></button>`;
+  });
+  line.innerHTML = s;
+  line.querySelectorAll(".rundot").forEach(b => b.addEventListener("click", () => selectRun(Number(b.dataset.i))));
+  document.getElementById("run-prev").addEventListener("click", () => selectRun(SEL - 1));
+  document.getElementById("run-next").addEventListener("click", () => selectRun(SEL + 1));
+}
+
+function selectRun(i) {
+  if (i < 0 || i >= RUNS.length) return;
+  SEL = i;
+  const r = RUNS[i];
+  document.querySelectorAll(".rundot").forEach(b => b.classList.toggle("is-cur", Number(b.dataset.i) === i));
+  document.getElementById("run-prev").disabled = i === 0;
+  document.getElementById("run-next").disabled = i === RUNS.length - 1;
+  const einde = r.laatste_fase_klaar || r.klaar;
+  document.getElementById("run-title").textContent = `Run ${r.run} · ${fmtDate(r.gestart)}`;
+  const sub = document.getElementById("run-sub");
+  if (r.status === "ok") {
+    sub.textContent = `${fmtTime(r.gestart)} tot ${fmtTime(einde)} · ${fmtDur(r.duur_s)} · ${fmtN(r.fouten)} fouten`;
+    sub.classList.remove("bad");
+  } else {
+    sub.textContent = r.opmerking || "afgebroken";
+    sub.classList.add("bad");
+  }
+  applyRunToMap(r);
+  renderFigures(r);
+  renderGantt(r);
+  renderSparks();
+  // detailpaneel verversen als er een knooppunt actief is
+  const on = document.querySelector("#map-scroll .node.is-on");
+  if (on) document.getElementById("md-deltas").innerHTML = deltaListHTML(on.dataset.id);
+}
+
+function renderFigures(r) {
+  const box = document.getElementById("figures");
+  const einde = r.laatste_fase_klaar || r.klaar;
+  document.getElementById("figures-aside").textContent = r.status === "ok"
+    ? `run ${r.run} · ${fmtDate(r.gestart)} ${fmtTime(r.gestart)} tot ${fmtTime(einde)} · ${fmtDur(r.duur_s)}`
+    : `run ${r.run} · ${fmtDate(r.gestart)}`;
+  if (!r.totalen) {
+    const verwacht = r.verwacht ? Object.entries(r.verwacht).map(([k, v]) => `${fmtSigned(v)} ${DATA.bronnen[k] ? DATA.bronnen[k].label : k}`).join(", ") : "";
+    box.innerHTML = `<div class="notice"><b>Deze run is afgebroken.</b> ${esc(r.opmerking || "")} Er zijn geen totalen vastgelegd; de fasen die wel draaiden staan hieronder.${verwacht ? " De voorvertoning verwachtte: " + esc(verwacht) + "." : ""} De volgende run heeft het werk alsnog gedaan, want elke fase is herstartbaar.</div>`;
+    return;
+  }
+  const d = r.delta || {};
+  box.className = "figures";
+  box.innerHTML = FIG_KEYS.map(k => {
+    const b = DATA.bronnen[k], v = d[k];
+    const cls = v == null ? "zero" : v < 0 ? "neg" : v === 0 ? "zero" : "";
+    return `<div class="fig"><b class="${cls}">${v == null ? "—" : fmtSigned(v)}</b><span>${esc(b.label)}</span><small>totaal ${fmtN(r.totalen[k])}</small></div>`;
+  }).join("");
+}
+
+/* ---- tijdverloop --------------------------------------------------- */
+function renderGantt(r) {
+  const box = document.getElementById("gantt");
+  const fasen = (r.fasen || []).filter(f => f.start).slice().sort((a, b) => new Date(a.start) - new Date(b.start));
+  document.getElementById("gantt-aside").textContent = `${fasen.length} fasen · run ${r.run}`;
+  if (!fasen.length) { box.innerHTML = `<div class="notice" style="border:0">Voor deze run zijn geen fasen geregistreerd.</div>`; return; }
+  const t0 = new Date(r.gestart).getTime();
+  const tEnd = Math.max(...fasen.map(f => new Date(f.einde || f.start).getTime()), t0 + 60000);
+  const span = tEnd - t0;
+  const W = 1000, labelW = 250, rightW = 110, rowH = 26, top = 30, bottom = 10;
+  const plotW = W - labelW - rightW, H = top + fasen.length * rowH + bottom;
+  const x = t => labelW + ((t - t0) / span) * plotW;
+  const stepH = span > 12 * 3600e3 ? 2 : span > 4 * 3600e3 ? 1 : 0.5;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tijdverloop van de fasen van run ${r.run}">`;
+  for (let h = 0; h * 3600e3 <= span + 1; h += stepH) {
+    const xx = x(t0 + h * 3600e3);
+    s += `<line class="g-grid" x1="${xx.toFixed(1)}" y1="${top - 6}" x2="${xx.toFixed(1)}" y2="${H - bottom}"/>`;
+    s += `<text class="g-tick" x="${xx.toFixed(1)}" y="${top - 12}" text-anchor="middle">${Number.isInteger(h) ? h + " u" : ""}</text>`;
+  }
+  fasen.forEach((f, i) => {
+    const y = top + i * rowH;
+    const a = new Date(f.start).getTime(), b = new Date(f.einde || f.start).getTime();
+    const x1 = x(a), x2 = Math.max(x(b), x1 + 2);
+    const grp = f.status === "gefaald" || f.status === "deels" ? f.status : (FASE_GROEP[f.bron] || "overig");
+    let sub = fmtDur(f.duur_s);
+    if (f.voor != null && f.na != null) sub += ` · ${fmtSigned(f.na - f.voor)}`;
+    else if (f.verwerkt != null) sub += ` · ${fmtN(f.verwerkt)}`;
+    s += `<text class="g-label" x="12" y="${y + 16}">${esc(f.naam)}</text>`;
+    s += `<rect class="g-bar ${grp}" x="${x1.toFixed(1)}" y="${y + 6}" width="${(x2 - x1).toFixed(1)}" height="14" rx="3"><title>${esc(f.naam)}: ${fmtTime(f.start)} tot ${fmtTime(f.einde || f.start)} · ${sub}</title></rect>`;
+    s += `<text class="g-sub" x="${W - 12}" y="${y + 17}" text-anchor="end">${esc(sub)}</text>`;
+  });
+  s += `</svg>`;
+  box.innerHTML = s;
+}
+
+/* ---- groei over alle runs ------------------------------------------ */
+function renderSparks() {
+  const serie = DATA.runs.filter(r => r.totalen);
+  const sel = RUNS[SEL];
+  document.getElementById("sparks-aside").textContent = `${serie.filter(r => r.status === "ok").length} voltooide runs sinds ${fmtDate(serie[0].gestart)}`;
+  const W = 300, H = 70, px = 4, py = 6;
+  const t0 = new Date(serie[0].gestart).getTime(), t1 = new Date(serie[serie.length - 1].gestart).getTime(), span = Math.max(1, t1 - t0);
+  const items = SPARK_KEYS.map(k => ({ k, label: DATA.bronnen[k].label, vals: serie.map(r => r.totalen[k]) }));
+  items.push({ k: "db", label: "omvang van de werkbank (GB)", vals: serie.map(r => r.db_gb) });
+  document.getElementById("sparks").innerHTML = items.map(it => {
+    const pts = serie.map((r, i) => ({ t: new Date(r.gestart).getTime(), v: it.vals[i], r })).filter(p => p.v != null);
+    if (pts.length < 2) return "";
+    const vmin = Math.min(...pts.map(p => p.v)), vmax = Math.max(...pts.map(p => p.v));
+    const vr = Math.max(1, vmax - vmin);
+    const X = t => px + ((t - t0) / span) * (W - 2 * px);
+    const Y = v => H - py - ((v - vmin) / vr) * (H - 2 * py);
+    const d = pts.map((p, i) => (i ? "L" : "M") + X(p.t).toFixed(1) + " " + Y(p.v).toFixed(1)).join(" ");
+    const area = d + ` L${X(pts[pts.length - 1].t).toFixed(1)} ${H} L${X(pts[0].t).toFixed(1)} ${H} Z`;
+    const cur = sel && sel.totalen ? pts.find(p => p.r.run === sel.run) : null;
+    const last = pts[pts.length - 1], first = pts[0];
+    const unit = it.k === "db" ? " GB" : "";
+    const curTxt = cur ? `${fmtN(cur.v)}${unit}` : "—";
+    return `<div class="spark">
+      <div class="spark__head"><span>${esc(it.label)}</span><b class="num">${curTxt}</b></div>
+      <svg viewBox="0 0 ${W} ${H}" aria-label="${esc(it.label)}: van ${fmtN(first.v)} naar ${fmtN(last.v)}">
+        <path class="sp-area" d="${area}"/><path class="sp-line" d="${d}"/>
+        ${cur ? `<line class="sp-curline" x1="${X(cur.t).toFixed(1)}" y1="${py}" x2="${X(cur.t).toFixed(1)}" y2="${H - py}"/><circle class="sp-cur" cx="${X(cur.t).toFixed(1)}" cy="${Y(cur.v).toFixed(1)}" r="4"/>` : ""}
+      </svg>
+      <div class="spark__foot"><span>${fmtN(first.v)}${unit} · ${fmtDateShort(first.r.gestart)}</span><span>${fmtSigned(last.v - first.v)}${unit} sinds de eerste meting</span></div>
+    </div>`;
+  }).join("");
+}
+
+/* =====================================================================
+   STAPPEN EN SITES (vast)
+   ===================================================================== */
+function renderSteps() {
+  const maxMin = Math.max(...STEPS.flatMap(p => p.items.map(i => i.min)));
+  let n = 0, s = "";
+  STEPS.forEach(p => {
+    const total = p.items.reduce((a, i) => a + i.min, 0);
+    s += `<div class="ledger__phase"><h3>${esc(p.phase)}</h3><span>${esc(p.phaseNote)}${p.phaseNote ? " · " : ""}${minLabel(total)}</span></div>`;
+    p.items.forEach(i => {
+      n += 1;
+      const w = Math.max(3, Math.round(100 * Math.sqrt(i.min / maxMin)));
+      const whereCls = i.where === "productie" ? "prod" : i.where === "ai" ? "ai" : "";
+      const whereTxt = { werkbank: "werkbank", productie: "productie", ai: "werkbank · taalmodel", beide: "werkbank en productie", sites: "sites" }[i.where];
+      s += `<div class="step"><span class="step__n">${String(n).padStart(2, "0")}</span>
+        <div><div class="step__t">${esc(i.t)}</div><p class="step__d">${esc(i.d)}</p><span class="step__where ${whereCls}">${whereTxt}</span></div>
+        <div class="step__bar"><i class="${i.bar}" style="width:${w}%"></i><span>${minLabel(i.min)}</span></div></div>`;
+    });
+  });
+  document.getElementById("ledger").innerHTML = s;
+}
+
+function renderSites() {
+  const label = { live: "Live", weekly: "Wekelijks", manual: "Handmatig" };
+  document.getElementById("sites-grid").innerHTML = NODES.filter(n => n.col === "site").map(n => `
+    <article class="site">
+      <div class="site__top">
+        <a class="site__name" href="${n.url}" target="_blank" rel="noopener">${esc(n.title)}</a>
+        <span class="badge badge--${n.mode}"><span class="led"></span>${label[n.mode]}</span>
+      </div>
+      <p class="site__how">${esc(n.detail)}</p>
+      <p class="site__when">${esc(n.meta)}</p>
+    </article>`).join("");
+}
+
+/* =====================================================================
+   START
+   ===================================================================== */
+renderMap();
+renderSteps();
+renderSites();
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+function noRuns(msg) {
+  document.getElementById("stamp-v").textContent = "stand niet beschikbaar";
+  document.getElementById("runbar").innerHTML = `<div class="notice" style="border:0;padding:0">${esc(msg)}</div>`;
+  ["figures", "gantt", "sparks"].forEach(id => { document.getElementById(id).innerHTML = `<div class="notice">${esc(msg)}</div>`; });
+}
+
+fetch("./runs.json", { cache: "no-cache" })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(data => {
+    DATA = data;
+    RUNS = data.runs.filter(r => r.status === "ok" || r.status === "afgebroken");
+    if (!RUNS.length) { noRuns("Er zijn nog geen runs geregistreerd."); return; }
+    const laatsteOk = [...RUNS].reverse().find(r => r.status === "ok");
+    if (laatsteOk) {
+      const einde = laatsteOk.laatste_fase_klaar || laatsteOk.klaar;
+      document.getElementById("stamp-v").innerHTML = `${esc(fmtDate(einde))} <small>${esc(fmtTime(einde))} · ${fmtN(laatsteOk.fouten)} fouten</small>`;
+    }
+    renderRunbar();
+    selectRun(RUNS.indexOf(laatsteOk != null ? laatsteOk : RUNS[RUNS.length - 1]));
+  })
+  .catch(() => noRuns("De run-historie kon niet worden geladen."));
+</script>
+</body>
+</html>
