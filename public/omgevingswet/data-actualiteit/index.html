@@ -571,31 +571,31 @@ const NODES = [
     detail: "De database waar de sites uit lezen, met een REST-API ervoor. Krijgt elke week de nieuwe rijen gekopieerd en bouwt de afgeleide tabellen (kaartlagen, koppelingen, gezondheidsmetingen) zelf opnieuw. Er draaien geen loaders tegen productie. Elke live site praat met de API via een eigen proxy op het eigen domein, zodat de sleutel nooit in de browser staat.",
     meta: "Railway · PostgreSQL 17 + PostGIS · FastAPI" },
 
-  { id: "odr", col: "site", title: "Omgevingsdocumentenregister", mode: "live", url: "https://omgevingsdocumentenregister.nl",
+  { id: "odr", col: "site", title: "Omgevingsdocumentenregister", mode: "live", url: "https://omgevingsdocumentenregister.nl", feeds: ["ozon", "pdok", "rtr"],
     detail: "Zoekt in de productiedatabase bij elk bezoek: elk omgevingsdocument en nog geldend bestemmingsplan. Toont daarnaast de oordelen van vier zustersites (ponsenkaart, instructieregels, implementatiemonitor, annotatieconformiteit) via hun gepubliceerde feeds, met de peildatum erbij.",
     meta: "live via de API · plus feeds van vier zustersites" },
-  { id: "viewer", col: "site", title: "OCD-viewer", mode: "live", url: "https://ocd-viewer.nl",
+  { id: "viewer", col: "site", title: "OCD-viewer", mode: "live", url: "https://ocd-viewer.nl", feeds: ["ozon", "pdok", "rtr"],
     detail: "Van locatie naar de geldende regels: kaartlagen, documenten en de AI-samenvatting komen bij elk bezoek uit productie. Heeft een eigen pagina met de laadstatus per bron, rechtstreeks uit de database.",
     meta: "live via de API · laadstatus per bron op ocd-viewer.nl/data" },
-  { id: "ovr", col: "site", title: "Omgevingsvergunningenregister", mode: "live", url: "https://omgevingsvergunningenregister.nl",
+  { id: "ovr", col: "site", title: "Omgevingsvergunningenregister", mode: "live", url: "https://omgevingsvergunningenregister.nl", feeds: ["koop", "ozon"],
     detail: "Doorzoekt alle vergunningkennisgevingen van Nederland, bij elk bezoek uit productie. De nieuwe kennisgevingen van de week staan erin zodra de sync is afgerond.",
     meta: "live via de API" },
-  { id: "bot", col: "site", title: "Omgevingsbot", mode: "live", url: "https://omgevingsbot.nl",
+  { id: "bot", col: "site", title: "Omgevingsbot", mode: "live", url: "https://omgevingsbot.nl", feeds: ["ozon", "pdok"],
     detail: "Beantwoordt vragen over de regels op een locatie. Haalt de regelteksten en de vectorindex bij elke vraag uit productie en laat een taalmodel het antwoord formuleren op basis van die teksten.",
     meta: "live via de API · taalmodel voor het antwoord" },
-  { id: "pons", col: "site", title: "Ponsenkaart", mode: "live", url: "https://ponsenkaart.nl",
+  { id: "pons", col: "site", title: "Ponsenkaart", mode: "live", url: "https://ponsenkaart.nl", feeds: ["ozon", "pdok"],
     detail: "Hoe ver elke gemeente is met de overgang van bestemmingsplannen naar het omgevingsplan. Leest de gemeentestatistieken bij elk bezoek uit productie; die statistieken worden aan het eind van elke sync opnieuw berekend.",
     meta: "live via de API" },
-  { id: "irm", col: "site", title: "Monitor instructieregels", mode: "weekly", url: "https://instructieregels.nl",
+  { id: "irm", col: "site", title: "Monitor instructieregels", mode: "weekly", url: "https://instructieregels.nl", feeds: ["ozon"],
     detail: "In hoeveel omgevingsplannen de instructieregels van Rijk en provincies terug te vinden zijn. Wordt elke maandagochtend automatisch opnieuw gebouwd uit de productiedatabase en gepubliceerd. De doorwerkingsoordelen zelf komen uit de werkbank, waar een taalmodel ze na elke sync beoordeelt.",
     meta: "gebakken · elke maandag 06:00 UTC via GitHub Actions · datum in de site" },
-  { id: "dim", col: "site", title: "DSO Implementatiemonitor", mode: "weekly", url: "https://dso-implementatiemonitor.nl",
+  { id: "dim", col: "site", title: "DSO Implementatiemonitor", mode: "weekly", url: "https://dso-implementatiemonitor.nl", feeds: ["ozon", "koop", "pdok"],
     detail: "De indicatoren van de Monitor Werking Omgevingswet, actueel gemeten. De implementatiescore wordt elke maandagochtend automatisch herberekend uit de gepubliceerde feeds van de zustersites; de historische reeksen komen rechtstreeks uit de werkbank.",
     meta: "gebakken · elke maandag 05:12 UTC via GitHub Actions · peildatum in de site" },
-  { id: "aco", col: "site", title: "Annotatieconformiteit", mode: "manual", url: "https://annotatieconformiteit.nl",
+  { id: "aco", col: "site", title: "Annotatieconformiteit", mode: "manual", url: "https://annotatieconformiteit.nl", feeds: ["ozon", "rtr"],
     detail: "Hoe goed omgevingsdocumenten voldoen aan de DSO-standaarden, gescoord op 45 richtlijnen. Wordt na elke sync opnieuw doorgerekend en gepubliceerd. De site toont zowel de meetdatum als de peildatum van de brondata.",
     meta: "gebakken · na elke sync, handmatig · meetdatum en peildatum in de site" },
-  { id: "merr", col: "site", title: "MER-register", mode: "manual", url: "https://mer-register.nl",
+  { id: "merr", col: "site", title: "MER-register", mode: "manual", url: "https://mer-register.nl", feeds: ["mer"],
     detail: "Milieueffectrapportages en hun procesbesluiten. Wordt gebouwd uit de eigen oogst van de Commissie m.e.r. en de bekendmakingen, en na elke oogst opnieuw gepubliceerd.",
     meta: "gebakken · na elke oogst, handmatig" }
 ];
@@ -815,13 +815,33 @@ function wireMap() {
   const nodes = [...svg.querySelectorAll(".node")], edges = [...svg.querySelectorAll(".edge")];
   const dots = [...svg.querySelectorAll(".dot")], pills = [...svg.querySelectorAll(".pill")];
   const ic = detail.querySelector(".map-detail__ic");
+  /* De keten van bron tot site: een bron licht ook de sites op die hij voedt,
+     een site ook de bronnen waar hij uit put, steeds via werkbank en productie. */
   function connected(id) {
+    const n = byId[id];
     const keep = new Set([id]), eKeep = new Set();
-    EDGES.forEach((e, i) => { if (e.from === id || e.to === id) { eKeep.add(i); keep.add(e.from); keep.add(e.to); } });
-    return { keep, eKeep };
+    const sites = NODES.filter(x => x.col === "site");
+    let srcs = [], sts = [];
+    if (n.col === "src") { srcs = [id]; sts = sites.filter(s => (s.feeds || []).includes(id)).map(s => s.id); }
+    else if (n.col === "site") { sts = [id]; srcs = n.feeds || []; }
+    else if (n.col === "prod") { srcs = NODES.filter(x => x.col === "src").map(x => x.id); sts = EDGES.filter(e => e.from === "prod").map(e => e.to); }
+    else { srcs = NODES.filter(x => x.col === "src").map(x => x.id); sts = sites.map(s => s.id); }
+    const nodesOn = new Set([...srcs, ...sts, "hub", "prod"]);
+    // productie alleen als een gekozen site er echt uit leest
+    if (n.col !== "hub" && !EDGES.some(e => e.from === "prod" && sts.includes(e.to))) nodesOn.delete("prod");
+    if (n.col === "prod") nodesOn.add("prod");
+    EDGES.forEach((e, i) => {
+      const on = (e.to === "hub" && srcs.includes(e.from))
+        || (e.from === "hub" && e.to === "prod" && nodesOn.has("prod"))
+        || (e.from === "prod" && sts.includes(e.to))
+        || (e.from === "hub" && sts.includes(e.to));
+      if (on) { eKeep.add(i); keep.add(e.from); keep.add(e.to); }
+    });
+    nodesOn.forEach(x => keep.add(x));
+    return { keep, eKeep, srcs, sts };
   }
   function focus(id) {
-    const { keep, eKeep } = connected(id);
+    const { keep, eKeep, srcs, sts } = connected(id);
     nodes.forEach(g => { g.classList.toggle("is-dim", !keep.has(g.dataset.id)); g.classList.toggle("is-on", g.dataset.id === id); });
     edges.forEach((p, i) => p.classList.toggle("is-dim", !eKeep.has(i)));
     dots.forEach(c => c.classList.toggle("is-dim", !eKeep.has(Number(c.dataset.edge))));
@@ -830,7 +850,10 @@ function wireMap() {
     detail.classList.remove("is-empty");
     document.getElementById("md-title").textContent = n.title + (n.sub ? " — " + n.sub : "");
     document.getElementById("md-text").textContent = n.detail;
-    document.getElementById("md-meta").textContent = n.meta || "";
+    let keten = "";
+    if (n.col === "src") keten = `Voedt: ${sts.map(s => byId[s].title).join(", ") || "—"}`;
+    else if (n.col === "site") keten = `Put uit: ${srcs.map(s => byId[s].title).join(", ") || "—"}`;
+    document.getElementById("md-meta").textContent = [n.meta, keten].filter(Boolean).join(" · ");
     document.getElementById("md-deltas").innerHTML = deltaListHTML(id);
     ic.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[n.col]}</svg>`;
   }
