@@ -1,18 +1,23 @@
 # woordjacht-api
 
 Ranglijstdienst voor [elconteo.nl/woordjacht](https://elconteo.nl/woordjacht/).
-Draait op Railway, met Postgres in hetzelfde Railway-project.
+Draait op Coolify op de server `apps-1` (Hetzner): project `woordjacht`, app
+`woordjacht-api`, gebouwd met Railpack uit deze map. Een push naar `main` deployt.
+Tot de DNS-overstap van `api.elconteo.nl` draait hij ook nog op Railway.
+Zie c:/GIT/OCD/docs/railway-naar-hetzner-plan.md.
 
 ## Omgevingsvariabelen
 
-Beide worden in Railway gezet, **nooit in deze repo**:
+Wordt in Coolify gezet, **nooit in deze repo**:
 
 | Variabele | Waarde |
 | --- | --- |
-| `DATABASE_URL` | referentie naar de Postgres-service: `${{ Postgres.DATABASE_URL }}` |
 | `WOORDJACHT_SECRET` | lange willekeurige tekenreeks; ondertekent de rondetokens |
 
-`PORT` zet Railway zelf; de server luistert daarop.
+`DATABASE_URL` is niet nodig: de dienst gebruikt geen database (de lobby zit in
+het geheugen). `/gezond` meldt daarom `database_gekoppeld: false`.
+
+De server luistert op `PORT`, standaard 3000; Coolify stuurt verkeer naar 3000.
 `HERKOMST_EXTRA` is optioneel en alleen voor lokaal ontwikkelen
 (bijvoorbeeld `http://localhost:8099`).
 
