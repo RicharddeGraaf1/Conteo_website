@@ -567,9 +567,9 @@ const NODES = [
     detail: "Een PostGIS-database op een eigen machine, de enige plek waar bronnen worden bevraagd. Hier wordt geladen, afgeleid en gerekend: geometrie opgeknipt en vereenvoudigd voor de kaart, teksten gekoppeld aan de objecten waar ze over gaan, een vectorindex gebouwd met een lokaal taalmodel, en met Claude de doorwerkingsoordelen en begrijpelijke hertalingen gemaakt. Pas als alles klopt, gaan de rijen naar productie.",
     meta: "Docker · PostgreSQL 16 + PostGIS" },
 
-  { id: "prod", col: "prod", title: "Productie", sub: "PostGIS en API op Railway",
+  { id: "prod", col: "prod", title: "Productie", sub: "PostGIS en bijbehorende API",
     detail: "De database waar de sites uit lezen, met een REST-API ervoor. Krijgt elke week de nieuwe rijen gekopieerd en bouwt de afgeleide tabellen (kaartlagen, koppelingen, gezondheidsmetingen) zelf opnieuw. Er draaien geen loaders tegen productie. Elke live site praat met de API via een eigen proxy op het eigen domein, zodat de sleutel nooit in de browser staat.",
-    meta: "Railway · PostgreSQL 17 + PostGIS · FastAPI" },
+    meta: "PostgreSQL 17 + PostGIS · FastAPI" },
 
   { id: "odr", col: "site", title: "Omgevingsdocumentenregister", mode: "live", url: "https://omgevingsdocumentenregister.nl", feeds: ["ozon", "pdok", "rtr"],
     detail: "Zoekt in de productiedatabase bij elk bezoek: elk omgevingsdocument en nog geldend bestemmingsplan. Toont daarnaast de oordelen van vier zustersites (ponsenkaart, instructieregels, implementatiemonitor, annotatieconformiteit) via hun gepubliceerde feeds, met de peildatum erbij.",
@@ -631,7 +631,7 @@ const STEPS = [
     { t: "Oude versies markeren", d: "Verdrongen en ingetrokken regelingen op inactief zetten, zodat oude en nieuwe versie niet naast elkaar in de zoekresultaten staan.", where: "werkbank", min: 1, bar: "lokaal" }
   ]},
   { phase: "Naar productie", phaseNote: "rijen kopiëren, afgeleide tabellen herbouwen", items: [
-    { t: "Repliceren", d: "De nieuw geladen rijen gaan over de lijn naar Railway. De zware afgeleide tabellen (kaartlagen, koppelingen) worden daar opnieuw gebouwd in plaats van verstuurd.", where: "productie", min: 45, bar: "prod" },
+    { t: "Repliceren", d: "De nieuw geladen rijen gaan over de lijn naar productie. De zware afgeleide tabellen (kaartlagen, koppelingen) worden daar opnieuw gebouwd in plaats van verstuurd.", where: "productie", min: 45, bar: "prod" },
     { t: "Vergunningen en toepasbare regels pushen", d: "De delta van de week, met controle op de aantallen aan beide kanten.", where: "productie", min: 20, bar: "prod" }
   ]},
   { phase: "Betekenis toevoegen", phaseNote: "lokale GPU en Claude", items: [
