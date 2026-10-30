@@ -6,7 +6,7 @@ Kale statische site. Cloudflare Pages-project `elconteo`
 ## Mappenindeling
 
 - `public/` — **alles wat de website is.** Dit en niets anders wordt gedeployd.
-- `api/` — de ranglijstdienst (Node, draait op Railway, niet op Pages).
+- `api/` — de ranglijstdienst (Node, draait op Coolify op `apps-1`, niet op Pages).
 - `tools/` — bouwgereedschap.
 - Losse bestanden in de root (`CLAUDE.md`, workflows) horen bij het project,
   niet bij de site.
@@ -112,7 +112,7 @@ Nederlands woordspel (4x4-raster, 90 seconden), volledig client-side.
   niet via `Math.random` — nieuwe willekeur in het spel moet dat pad volgen,
   anders lopen browsers in een gedeelde ronde uit elkaar.
 - `API_BASIS` boven in `woordjacht.js` wijst naar `https://api.elconteo.nl`
-  (Railway). Leeg maken schakelt samen spelen uit; de knop verdwijnt dan en
+  (Coolify op `apps-1`). Leeg maken schakelt samen spelen uit; de knop verdwijnt dan en
   `Samen.vraag` weigert, zodat er nooit een verzoek naar de eigen site gaat.
 - **Slepen gaat op middelpunten, niet op rechthoeken.** Een steen oppikken
   zodra je hem ergens raakt maakt schuine halen onbruikbaar: op de diagonaal

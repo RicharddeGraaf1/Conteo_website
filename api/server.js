@@ -1,6 +1,6 @@
 /* ==========================================================================
    Woordjacht — ranglijstdienst
-   Draait op Railway; de site zelf staat op Cloudflare Pages.
+   Draait op Coolify (apps-1); de site zelf staat op Cloudflare Pages.
 
    Dit is bewust nog een casco: genoeg om te bewijzen dat de service bouwt,
    luistert, bereikbaar is en zijn omgevingsvariabelen ziet. De echte

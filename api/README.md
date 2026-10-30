@@ -3,8 +3,8 @@
 Ranglijstdienst voor [elconteo.nl/woordjacht](https://elconteo.nl/woordjacht/).
 Draait op Coolify op de server `apps-1` (Hetzner): project `woordjacht`, app
 `woordjacht-api`, gebouwd met Railpack uit deze map. Een push naar `main` deployt.
-Tot de DNS-overstap van `api.elconteo.nl` draait hij ook nog op Railway.
-Zie c:/GIT/OCD/docs/railway-naar-hetzner-plan.md.
+`api.elconteo.nl` wijst sinds 2026-10-27 naar `apps-1` (A-record, DNS only); het oude
+Railway-project `woordjacht` wordt opgeheven. Zie c:/GIT/OCD/docs/railway-naar-hetzner-plan.md.
 
 ## Omgevingsvariabelen
 
